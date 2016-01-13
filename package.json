@@ -1,0 +1,26 @@
+{
+  "name": "mongodb-rest",
+  "description": "MongoDB REST",
+  "version": "0.0.1",
+  "author": "Const <const.dev@yandex.ru>",
+  "main": "server.js",
+  "directories": {
+    "modules": "./modules"
+  },
+  "keywords": [
+    "mongodb",
+    "mongo",
+    "db",
+    "rest",
+    "restful",
+    "api"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "dependencies": {
+    "mongodb": "^2.1.4",
+    "restify": "^4.0.3"
+  }
+}
