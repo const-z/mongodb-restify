@@ -22,10 +22,13 @@ function handleGet(req, res, next) {
 
     var test = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];
 
-    var v;
-    for (v in req.query) {
+    var loadJoined = false;
+    for (var v in req.query) {
         if (test.indexOf(v) !== -1) {
             options[v] = req.query[v];
+        }
+        if ("join" == v) {
+            loadJoined = true;
         }
     }
 
@@ -46,23 +49,35 @@ function handleGet(req, res, next) {
                 var result = [];
                 if (req.params.id) {
                     if (docs.length > 0) {
-                        // result = docs[0];//util.flavorize(docs[0], "out");
-                        // res.json(result, { 'content-type': 'application/json; charset=utf-8' });
-                        db.close();
-                        util.loadJoinedObject(docs[0], req.params.db, config, function(doc) {
-                            res.json(doc, { 'content-type': 'application/json; charset=utf-8' });    
-                        });                        
+                        if (loadJoined) {
+                            util.loadJoinedObject(docs[0], req.params.db, config, function (doc) {
+                                res.json(doc, { 'content-type': 'application/json; charset=utf-8' });
+                            });
+                        } else {
+                            result = docs[0];
+                            res.json(result, { 'content-type': 'application/json; charset=utf-8' });
+                        }
                     } else {
                         res.json(404);
                     }
                 } else {
-                    docs.forEach(function (doc) {
-                        result.push(doc);//util.flavorize(doc, "out"));
-                    });
-                    res.json(result, { 'content-type': 'application/json; charset=utf-8' });
-                    db.close();
+                    var count = docs.length;
+                    if (loadJoined) {
+                        docs.forEach(function (doc) {
+                            util.loadJoinedObject(doc, req.params.db, config, function (doc) {
+                                result.push(doc);//util.flavorize(doc, "out"));
+                                count--;
+                                if (count == 0) {
+                                    res.json(result, { 'content-type': 'application/json; charset=utf-8' });
+                                }
+                            });
+                        });
+                    } else {
+                        result.push(docs);
+                        res.json(result, { 'content-type': 'application/json; charset=utf-8' });
+                    }
                 }
-                
+                db.close();
             });
         });
     });
