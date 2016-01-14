@@ -43,6 +43,8 @@ var util = function () {
             });
         }
     };
+    
+    obj.save
 
     obj.cleanParams = function (params) {
         var clean = JSON.parse(JSON.stringify(params));
