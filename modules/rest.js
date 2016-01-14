@@ -66,8 +66,7 @@ function handleGet(req, res, next) {
                         docs.forEach(function (doc) {
                             util.loadJoinedObject(doc, req.params.db, config, function (doc) {
                                 result.push(doc);//util.flavorize(doc, "out"));
-                                count--;
-                                if (count == 0) {
+                                if (--count == 0) {
                                     res.json(result, { 'content-type': 'application/json; charset=utf-8' });
                                 }
                             });
@@ -90,16 +89,31 @@ server.get('/:db/:collection', handleGet);
 //insert
 server.post('/:db/:collection', function (req, res) {
     debug("POST-request received");
-    if (req.params) {
-        MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
-            var collection = db.collection(req.params.collection);
-            collection.insert(Array.isArray(req.params) ? util.cleanParams(req.params[0]) : util.cleanParams(req.params), function (err, docs) {
-                res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
-                res.set('content-type', 'application/json; charset=utf-8');
-                res.json(201, docs.result);
-                db.close();
+    if (req.body) {
+        var reqdoc = Array.isArray(req.body) ? req.body[0] : req.body;
+        if ("join" in req.query) {
+            MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+                var collection = db.collection(req.params.collection);
+                util.saveJoinedObject(reqdoc, req.params.db, config, function (doc) {
+                    collection.insert(doc, function (err, docs) {
+                        res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
+                        res.set('content-type', 'application/json; charset=utf-8');
+                        res.json(201, docs.result);
+                        db.close();
+                    });
+                });
             });
-        });
+        } else {
+            MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+                var collection = db.collection(req.params.collection);
+                collection.insert(reqdoc, function (err, docs) {
+                    res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
+                    res.set('content-type', 'application/json; charset=utf-8');
+                    res.json(201, docs.result);
+                    db.close();
+                });
+            });
+        }
     } else {
         res.set('content-type', 'application/json; charset=utf-8');
         res.json(200, { "ok": 0 });
@@ -113,9 +127,8 @@ server.put('/:db/:collection/:id', function (req, res) {
         '_id': isNaN(req.params.id) ? new BSON.ObjectID(req.params.id) : +req.params.id
     };
     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
-        var collection = db.collection(req.params.collection);
-        console.dir(util.cleanParams(req.params));
-        collection.updateOne(spec, { $set: util.cleanParams(req.params) }, function (err, docs) {
+        var collection = db.collection(req.params.collection);        
+        collection.updateOne(spec, { $set: req.body }, function (err, docs) {
             res.set('content-type', 'application/json; charset=utf-8');
             res.json(docs.result);
             db.close();

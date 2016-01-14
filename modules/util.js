@@ -9,7 +9,6 @@ var util = function () {
         var collectionsNames = [];
         for (var f in doc) {
             if (f !== "_id" && f.indexOf("_id") > -1) {
-                count++;
                 collectionsNames.push(f.slice(0, -3));
             }
         }
@@ -29,11 +28,9 @@ var util = function () {
                 };
                 collection.find(query, {}, function (err, cursor) {
                     cursor.toArray(function (err, docs) {
-                        var result = [];
                         if (docs.length > 0) {
-                            count--;
                             doc[collectionsNames[i] + "_id"] = docs[0];
-                            if (count == 0) {
+                            if (--count == 0) {
                                 callback(doc);
                             }
                         }
@@ -43,8 +40,50 @@ var util = function () {
             });
         }
     };
-    
-    obj.save
+
+    obj.saveJoinedObject = function (doc, dbName, config, callback) {
+        var collectionsNames = [];
+        for (var f in doc) {
+            if (f !== "_id" && f.indexOf("_id") > -1) {
+                collectionsNames.push(f.slice(0, -3));
+            }
+        }
+        var count = collectionsNames.length;
+        if (count == 0) {
+            callback(doc);
+            return;
+        }
+        for (var i in collectionsNames) {
+            var joinedObject = doc[collectionsNames[i] + "_id"];
+            joinedObject = Array.isArray(joinedObject) ? joinedObject[0] : joinedObject;
+            if (joinedObject._id) {
+                joinedObject._id = isNaN(joinedObject._id) ? new BSON.ObjectID(joinedObject._id) : +joinedObject._id;
+            }
+            if (typeof joinedObject == "object") {
+                MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
+                    var collection = db.collection(collectionsNames[i]);
+                    collection.insert(joinedObject, function (err, docs) {
+                        if (err && err.code == 11000) {
+                            collection.updateOne({ "_id": joinedObject._id }, { $set: joinedObject }, function (err, docs) {
+                                doc[collectionsNames[i] + "_id"] = joinedObject._id;
+                                if (--count == 0) {
+                                    callback(doc);
+                                }
+                                db.close();
+                            });
+                        } else {
+                            doc[collectionsNames[i] + "_id"] = docs.insertedIds[0];
+                            if (--count == 0) {
+                                callback(doc);
+                            }
+                            db.close();
+                        }
+                    });
+                });
+            }
+        }
+
+    };
 
     obj.cleanParams = function (params) {
         var clean = JSON.parse(JSON.stringify(params));
