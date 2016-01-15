@@ -62,7 +62,7 @@ function handleGet(req, res, next) {
                     }
                 } else {
                     var count = docs.length;
-                    if (loadJoined) {
+                    if (docs.length>0 && loadJoined) {
                         docs.forEach(function (doc) {
                             util.loadJoinedObject(doc, req.params.db, config, function (doc) {
                                 result.push(doc);//util.flavorize(doc, "out"));
@@ -72,8 +72,7 @@ function handleGet(req, res, next) {
                             });
                         });
                     } else {
-                        result.push(docs);
-                        res.json(result, { 'content-type': 'application/json; charset=utf-8' });
+                        res.json(docs, { 'content-type': 'application/json; charset=utf-8' });
                     }
                 }
                 db.close();
@@ -95,30 +94,25 @@ server.post('/:db/:collection', function (req, res) {
         return;
     }
     var reqdoc = Array.isArray(req.body) ? req.body[0] : req.body;
+    var processDoc;
     if ("join" in req.query) {
-        //todo сократить вызов
-        MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
-            var collection = db.collection(req.params.collection);
-            util.saveJoinedObject(reqdoc, req.params.db, config, function (doc) {
-                collection.insert(doc, function (err, docs) {
-                    res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
-                    res.set('content-type', 'application/json; charset=utf-8');
-                    res.json(201, docs.result);
-                    db.close();
-                });
-            });
-        });
+        processDoc = util.saveJoinedObject;
     } else {
+        processDoc = function (reqdoc, dbName, config, callback) {
+            callback(reqdoc);
+        };
+    }
+    processDoc(reqdoc, req.params.db, config, function (doc) {
         MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
             var collection = db.collection(req.params.collection);
-            collection.insert(reqdoc, function (err, docs) {
+            collection.insert(doc, function (err, docs) {
                 res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
                 res.set('content-type', 'application/json; charset=utf-8');
                 res.json(201, docs.result);
                 db.close();
             });
         });
-    }
+    });
 });
 
 //update
@@ -128,27 +122,24 @@ server.put('/:db/:collection/:id', function (req, res) {
         '_id': isNaN(req.params.id) ? new BSON.ObjectID(req.params.id) : +req.params.id
     };
     var reqdoc = Array.isArray(req.body) ? req.body[0] : req.body;
+    var processDoc;
     if ("join" in req.query) {
-        MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
-            var collection = db.collection(req.params.collection);
-            util.saveJoinedObject(reqdoc, req.params.db, config, function (doc) {
-                collection.updateOne(spec, { $set: doc }, function (err, docs) {
-                    res.set('content-type', 'application/json; charset=utf-8');
-                    res.json(docs.result);
-                    db.close();
-                });
-            });
-        });
+        processDoc = util.saveJoinedObject;
     } else {
+        processDoc = function (reqdoc, dbName, config, callback) {
+            callback(reqdoc);
+        };
+    }
+    processDoc(reqdoc, req.params.db, config, function (doc) {
         MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
             var collection = db.collection(req.params.collection);
-            collection.updateOne(spec, { $set: reqdoc }, function (err, docs) {
+            collection.updateOne(spec, { $set: doc }, function (err, docs) {
                 res.set('content-type', 'application/json; charset=utf-8');
                 res.json(docs.result);
                 db.close();
             });
         });
-    }
+    });
 });
 
 //delete

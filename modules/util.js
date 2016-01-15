@@ -8,7 +8,7 @@ var util = function () {
     obj.loadJoinedObject = function (doc, dbName, config, callback) {
         var collectionsNames = [];
         for (var f in doc) {
-            if (f !== "_id" && f.indexOf("_id") > -1) {
+            if (f !== "_id" && f.indexOf("_id") > -1 && typeof doc[f] != "object") {
                 collectionsNames.push(f.slice(0, -3));
             }
         }
@@ -20,12 +20,12 @@ var util = function () {
         }
 
         for (var i in collectionsNames) {
+            var valueId = doc[collectionsNames[i] + "_id"];
+            var query = {
+                '_id': isNaN(valueId) ? new BSON.ObjectID(valueId) : +valueId
+            };
             MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
                 var collection = db.collection(collectionsNames[i]);
-                var id = doc[collectionsNames[i] + "_id"];
-                var query = {
-                    '_id': isNaN(id) ? new BSON.ObjectID(id) : +id
-                };
                 collection.find(query, {}, function (err, cursor) {
                     cursor.toArray(function (err, docs) {
                         if (docs.length > 0) {
