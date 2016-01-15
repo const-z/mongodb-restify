@@ -62,7 +62,7 @@ function handleGet(req, res, next) {
                     }
                 } else {
                     var count = docs.length;
-                    if (docs.length>0 && loadJoined) {
+                    if (docs.length > 0 && loadJoined) {
                         docs.forEach(function (doc) {
                             util.loadJoinedObject(doc, req.params.db, config, function (doc) {
                                 result.push(doc);//util.flavorize(doc, "out"));
@@ -82,6 +82,28 @@ function handleGet(req, res, next) {
 }
 
 //get
+server.get('/_meta/databases', function (req, res) {
+    var murl = "mongodb://" + config.db.host + ":" + config.db.port + "/";
+    MongoClient.connect(murl, function (err, db) {
+        db.admin().listDatabases(function (err, dbs) {
+            res.set('content-type', 'application/json; charset=utf-8');
+            res.json(dbs);
+            db.close();
+        });
+    });
+});
+
+server.get('/_meta/:db/collections', function (req, res) {
+    var murl = "mongodb://" + config.db.host + ":" + config.db.port + "/" + req.params.db;
+    MongoClient.connect(murl, function (err, db) {
+        db.listCollections().toArray(function (err, collections) {
+            res.set('content-type', 'application/json; charset=utf-8');
+            res.json(collections);
+            db.close();
+        });        
+    });
+});
+//
 server.get('/:db/:collection/:id?', handleGet);
 server.get('/:db/:collection', handleGet);
 
@@ -157,3 +179,4 @@ server.del('/:db/:collection/:id', function (req, res) {
         });
     });
 });
+
