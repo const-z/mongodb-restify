@@ -32,8 +32,8 @@ try {
 module.exports.config = config;
 
 var server = restify.createServer({
-  certificate: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\public.pem'),
-  key: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\private.pem'),
+//   certificate: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\public.pem'),
+//   key: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\private.pem'),
   name: "mongodb-restify"
 });
 server.acceptable = ['application/json'];

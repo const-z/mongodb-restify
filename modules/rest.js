@@ -82,33 +82,11 @@ function handleGet(req, res, next) {
 }
 
 //get
-server.get('/_meta/databases', function (req, res) {
-    var murl = "mongodb://" + config.db.host + ":" + config.db.port + "/";
-    MongoClient.connect(murl, function (err, db) {
-        db.admin().listDatabases(function (err, dbs) {
-            res.set('content-type', 'application/json; charset=utf-8');
-            res.json(dbs);
-            db.close();
-        });
-    });
-});
-
-server.get('/_meta/:db/collections', function (req, res) {
-    var murl = "mongodb://" + config.db.host + ":" + config.db.port + "/" + req.params.db;
-    MongoClient.connect(murl, function (err, db) {
-        db.listCollections().toArray(function (err, collections) {
-            res.set('content-type', 'application/json; charset=utf-8');
-            res.json(collections);
-            db.close();
-        });        
-    });
-});
-//
-server.get('/:db/:collection/:id?', handleGet);
-server.get('/:db/:collection', handleGet);
+server.get('/_data/:db/:collection/:id?', handleGet);
+server.get('/_data/:db/:collection', handleGet);
 
 //insert
-server.post('/:db/:collection', function (req, res) {
+server.post('/_data/:db/:collection', function (req, res) {
     debug("POST-request received");
     if (!req.body) {
         res.set('content-type', 'application/json; charset=utf-8');
@@ -138,7 +116,7 @@ server.post('/:db/:collection', function (req, res) {
 });
 
 //update
-server.put('/:db/:collection/:id', function (req, res) {
+server.put('/_data/:db/:collection/:id', function (req, res) {
     debug("PUT-request received");
     var spec = {
         '_id': isNaN(req.params.id) ? new BSON.ObjectID(req.params.id) : +req.params.id
@@ -165,7 +143,7 @@ server.put('/:db/:collection/:id', function (req, res) {
 });
 
 //delete
-server.del('/:db/:collection/:id', function (req, res) {
+server.del('/_data/:db/:collection/:id', function (req, res) {
     debug("DELETE-request received");
     var spec = {
         '_id': isNaN(req.params.id) ? new BSON.ObjectID(req.params.id) : +req.params.id
@@ -180,3 +158,31 @@ server.del('/:db/:collection/:id', function (req, res) {
     });
 });
 
+//meta
+server.get('/_meta/databases', function (req, res) {
+    var murl = "mongodb://" + config.db.host + ":" + config.db.port + "/";
+    MongoClient.connect(murl, function (err, db) {
+        db.admin().listDatabases(function (err, dbs) {
+            res.set('content-type', 'application/json; charset=utf-8');
+            res.json(dbs);
+            db.close();
+        });
+    });
+});
+
+server.get('/_meta/:db/collections', function (req, res) {
+    var murl = "mongodb://" + config.db.host + ":" + config.db.port + "/" + req.params.db;
+    MongoClient.connect(murl, function (err, db) {
+        db.listCollections().toArray(function (err, collections) {
+            res.set('content-type', 'application/json; charset=utf-8');
+            res.json(collections);
+            db.close();
+        });        
+    });
+});
+
+//serve static
+server.get("/.*", restify.serveStatic({
+  directory: './public',
+  default: 'index.html'
+}));
