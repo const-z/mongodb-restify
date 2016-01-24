@@ -42,6 +42,7 @@ server.use(restify.bodyParser());
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
 server.use(restify.jsonp());
+
 module.exports.server = server;
 
 require('./modules/rest');

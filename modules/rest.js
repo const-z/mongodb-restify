@@ -1,12 +1,23 @@
+'use stricts'
+//todo слушать изменения коллекций, добавлять слушателей коллекций по мере обращения
+//
 var MongoClient = require("mongodb").MongoClient;
 var BSON = require("bson");
+var util = require("./util");
+
 var server = module.parent.exports.server;
 var config = module.parent.exports.config;
 var debug = module.parent.exports.debug;
 var restify = module.parent.exports.restify;
-var util = require("./util");
 
 debug("rest.js is loaded");
+
+// var MongoWatch = require('mongo-watch');
+// var watcher = new MongoWatch({ parser: 'pretty' });
+
+// watcher.watch('test2.col', function (event) {
+//     return console.log('something changed:', event);
+// });
 
 function handleGet(req, res, next) {
     debug("GET-request received");
@@ -177,12 +188,18 @@ server.get('/_meta/:db/collections', function (req, res) {
             res.set('content-type', 'application/json; charset=utf-8');
             res.json(collections);
             db.close();
-        });        
+        });
     });
 });
 
 //serve static
 server.get("/.*", restify.serveStatic({
-  directory: './public',
-  default: 'index.html'
+    directory: './public',
+    default: 'index.html'
 }));
+
+//HTTP 404
+server.on('ResourceNotFound', function (req, res, err, cb) {
+    res.writeHead(301, { "Content-Type": "text/plain", "Location": "/?url=" + req.url });
+    res.end();
+});

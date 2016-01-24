@@ -1,93 +1,70 @@
 var appModule = angular.module("appModule", []);
 
-function toNumberOrZero(n) {
-    var c = 0;
-    try {
-        n = (" " + n).replace(" ", "").replace(",", ".");
-        c = parseFloat(n);
-        if (isNaN(c)) {
-            c = 0;
-        }
-    } catch (e) {
-        c = 0;
-    }
-    return c;
-}
+// "$scope", "$location", "$anchorScroll", "$timeout", "$interval", "$route", "appService", "utmService", 
+appModule.controller("appController", function ($scope, $location, $anchorScroll, $timeout, $interval, $route, appService) {
+    $scope.databases = [];
+    $scope.databaseSelected = null;
+    $scope.collections = [];
+    $scope.collectionSelected = null;
+    $scope.collectionContent = null;
 
-function toNumberOrException(n) {
-    var c = 0;
-    n = (" " + n).replace(" ", "").replace(",", ".");
-    c = parseFloat(n);
-    if (isNaN(c)) {
-        throw new Error("Неправильный формат данных: " + n);
-    }
-    return c;
-}
-
-function hex2a(hex) {
-    var str = '';
-    for (var i = 0; i < hex.length; i += 2)
-        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-    return str;
-}
-
-appModule.controller("appController", ["$scope", "$location", "$anchorScroll", "$timeout", "$interval", "$route", "appService", "utmService", function ($scope, $location, $anchorScroll, $timeout, $interval, $route, appService, utmService) {
-    $scope.subject = {};
-    $scope.wayBillList = [];
-    $scope.wayBillArchiveList = [];
-    utmService.getSubject(function (data) {
-        $scope.subject = data;
+    appService.getDatabases(function (data) {
+        $scope.databases = data.databases;
     });
 
-    var checkDocs = function () {
-        utmService.checkOutWayBill(function (data) {
-            var load = $scope.wayBillList.length <= 0;
-            $scope.wayBillList = []
-            $scope.wayBillArchiveList = []
-            for (var i in data) {
-                if (data[i].status!="confirmed"){
-                    $scope.wayBillList.push(data[i]);
-                } else {
-                    $scope.wayBillArchiveList.push(data[i]);
-                }
-            }
-            // $scope.wayBillList = data;
-            if (load) {
-                $route.reload();
-            }
-            $timeout(checkDocs, 5000);
-        });
-    };
-    checkDocs();
+    $scope.$on("$locationChangeSuccess", function (event, next, current) {
 
-    $scope.go = function (path) {
-        $location.path(path);
-    };
-
-}]);
-
-appModule.controller("subjectController", ["$scope", "$location", "$route", "appService", "utmService", function ($scope, $location, $route, appService, utmService) {
-}]);
-
-appModule.controller("restsController", ["$scope", "$location", "$route", "$timeout", "appService", "utmService", function ($scope, $location, $route, $timeout, appService, utmService) {
-    $scope.rests = {};
-    utmService.checkOutRests(function (data) {
-        //todo отсортировать массив по дате и выбрать послдений элемент
-        $scope.rests = data[data.length - 1];
-    });
-}]);
-
-appModule.controller("wayBillListController", ["$scope", "$location", "appService", "utmService", function ($scope, $location, appService, utmService) {
-    $scope.archiveVisible = false;
-}]);
-
-appModule.controller("wayBillDetailController", ["$scope", "$location", "appService", "utmService", "$routeParams", function ($scope, $location, appService, utmService, $routeParams) {
-    var list = utmService.wayBillList;
-    $scope.selected = null;
-    for (var i in list) {
-        if (list[i].wayBillNumber === $routeParams.waybillnum && list[i].fsrarid === $routeParams.fsrarid && list[i].date === $routeParams.date) {
-            $scope.selected = list[i];
-            break;
+        var url = $location.search().url;
+        if (url) {
+            $location.search('url', null);
+            $location.path(url);
         }
-    }    
-}]);
+
+        if (!$route.current) {
+            $scope.databaseSelected = null;
+            return;
+        }
+        $scope.databaseSelected = $route.current.params.database;
+        if ($route.current.params.collection) {
+            $scope.collectionSelected = null;
+            $scope.collectionContent = null;
+            appService.getCollections($scope.databaseSelected, function (data) {
+                $scope.collections = data;
+                $scope.collectionSelected = $route.current.params.collection;
+                appService.getContent($scope.databaseSelected, $scope.collectionSelected, function (data) {
+                    $scope.collectionContent = processContent(data);
+                    console.log($scope.collectionContent);
+                })
+            });
+        } else {
+            $scope.collectionSelected = null;
+            appService.getCollections($scope.databaseSelected, function (data) {
+                $scope.collections = data;
+            });
+        }
+    });
+
+    //Object.keys(a).length
+});
+
+function processContent(data) {
+    var tmpFields = {};
+    console.log("processContent");
+    console.log(data);
+    for (var i in data) {
+        var keys = Object.keys(data[i]);
+        console.log(keys);        
+        for (var j in keys) {
+            tmpFields[keys[j]] = 1;
+        }
+        console.log(tmpFields);
+    }
+    
+    var fields = [];
+    var fkeys = Object.keys(tmpFields);
+    for (var i in fkeys) {
+        fields.push(fkeys[i]);
+    }
+    
+    return { fields: fields, content: data };
+}
