@@ -1,18 +1,18 @@
 var appModule = angular.module("appModule", []);
 
-// "$scope", "$location", "$anchorScroll", "$timeout", "$interval", "$route", "appService", "utmService", 
 appModule.controller("appController", function ($scope, $location, $anchorScroll, $timeout, $interval, $route, appService) {
-    var pageSize = 20;
+    
     $scope.databases = [];
     $scope.databaseSelected = null;
+    
     $scope.collections = [];
     $scope.collectionSelected = null;
     $scope.collectionContent = null;
 
+    $scope.pageSize = 20;
     $scope.contentPages = 0;
     $scope.contentPageNum = 1;
-    $scope.contentCount = 0;
-    $scope.contentPagesRange = { from: 0, to: 0 };
+    $scope.contentCount = 0;    
 
     appService.getDatabases(function (data) {
         $scope.databases = data.databases;
@@ -46,38 +46,38 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
         }
     });
 
+    $scope.gotoPage = function (page) {
+        if (page < 1) {
+            page = 1;
+        } else if (page > $scope.contentPages) {
+            page = $scope.contentPages;
+        }
+        $location.path("/data/" + $scope.databaseSelected + "/" + $scope.collectionSelected + "/page/" + page);
+    };
+
     function selectCollection(database, collection) {
         appService.getCount(database, collection, function (data) {
-            $scope.contentPageNum = !!$route.current.params.pageNum ? $route.current.params.pageNum : 1;            
-            console.log($scope.contentPageNum);
-            $scope.contentPages = data.count / pageSize;
+            $scope.contentPages = Math.ceil(data.count / $scope.pageSize);
             $scope.contentCount = data.count;
             $scope.collectionSelected = collection;
-            appService.getContent($scope.databaseSelected, $scope.collectionSelected, "?limit=" + pageSize + "&skip=" + ($scope.contentPageNum * pageSize), function (data) {
-                $scope.collectionContent = processContent(data);
-            });
+
+            $scope.contentPageNum = !!$route.current.params.pageNum ? +$route.current.params.pageNum : 1;
+            if ($scope.contentPageNum < 1) {
+                $scope.gotoPage(1);
+                return;
+            } else if ($scope.contentPageNum > $scope.contentPages) {
+                $scope.gotoPage($scope.contentPages);
+                return;
+            }
+
+            appService.getContent($scope.databaseSelected, $scope.collectionSelected,
+                "?limit=" + $scope.pageSize + "&skip=" + (($scope.contentPageNum - 1) * $scope.pageSize),
+                function (data) {
+                    $scope.collectionContent = processContent(data);
+                });
         });
     }
 });
-
-// function setRange(count, pageSize, pageNum) {
-//     var pages = Math.ceil(count/pageSize);
-//     var pageBlocks = pages / 5;
-//     for (var i=0; i<pageBlocks; i++) {
-//         if (i*5<) {
-            
-//         }                
-//     }
-     
-//     // var to = 0;
-//     // if (pages<=pageNum) {
-//     //     to = pages;
-//     // } else if (pageNum) {
-        
-//     // }
-//     // var from = to - 5;
-//     // return {from: from, to: to};
-// }
 
 function processContent(data) {
     var tmpFields = {};
