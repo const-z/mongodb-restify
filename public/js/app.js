@@ -33,7 +33,7 @@ app.factory("appService", ["$http", function ($http) {
     obj.getCount = function (database, collection, callback) {
         $http.get("/_meta/" + database + "/" + collection + "/count", { headers: { "content-type": "application/json" } }).then(
             function (response) {
-                callback(response);
+                callback(response.data);
             });
     };
 
@@ -46,6 +46,10 @@ app.config(["$routeProvider", "$locationProvider", function ($routeProvider, $lo
     });
 
     $routeProvider.when('/data/:database/:collection', {
+        controller: 'appController'
+    });
+    
+    $routeProvider.when('/data/:database/:collection/page/:pageNum', {
         controller: 'appController'
     });
 
