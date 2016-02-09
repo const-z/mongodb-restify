@@ -19,7 +19,7 @@ var config = {
 
 var debug = module.exports.debug = function (str) {
   if (config.debug) {
-    console.log(DEBUGPREFIX + str);
+    console.log(DEBUGPREFIX + JSON.stringify(str));
   }
 };
 

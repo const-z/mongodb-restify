@@ -2,11 +2,14 @@ var appModule = angular.module("appModule", []);
 
 // "$scope", "$location", "$anchorScroll", "$timeout", "$interval", "$route", "appService", "utmService", 
 appModule.controller("appController", function ($scope, $location, $anchorScroll, $timeout, $interval, $route, appService) {
+    var pageSize = 20;
     $scope.databases = [];
     $scope.databaseSelected = null;
     $scope.collections = [];
     $scope.collectionSelected = null;
     $scope.collectionContent = null;
+    $scope.contentPages = 0;
+    
 
     appService.getDatabases(function (data) {
         $scope.databases = data.databases;
@@ -30,11 +33,7 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
             $scope.collectionContent = null;
             appService.getCollections($scope.databaseSelected, function (data) {
                 $scope.collections = data;
-                $scope.collectionSelected = $route.current.params.collection;
-                appService.getContent($scope.databaseSelected, $scope.collectionSelected, function (data) {
-                    $scope.collectionContent = processContent(data);
-                    console.log($scope.collectionContent);
-                })
+                selectCollection($scope.databaseSelected, $route.current.params.collection);
             });
         } else {
             $scope.collectionSelected = null;
@@ -44,27 +43,31 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
         }
     });
 
-    //Object.keys(a).length
+    function selectCollection(database, collection) {
+        appService.getCount(database, collection, function (data) {
+            $scope.collectionPages = data.count / pageSize;
+            $scope.collectionSelected = collection;
+            appService.getContent($scope.databaseSelected, $scope.collectionSelected, "?limit=20&skip=0", function (data) {                
+                $scope.collectionContent = processContent(data);                                
+            });
+        });
+    }
 });
 
 function processContent(data) {
     var tmpFields = {};
-    console.log("processContent");
-    console.log(data);
     for (var i in data) {
         var keys = Object.keys(data[i]);
-        console.log(keys);        
+        console.log(keys);
         for (var j in keys) {
             tmpFields[keys[j]] = 1;
         }
         console.log(tmpFields);
     }
-    
     var fields = [];
     var fkeys = Object.keys(tmpFields);
     for (var i in fkeys) {
         fields.push(fkeys[i]);
     }
-    
     return { fields: fields, content: data };
 }

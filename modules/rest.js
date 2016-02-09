@@ -31,15 +31,13 @@ function handleGet(req, res, next) {
     }
     var options = req.params.options || {};
 
-    var test = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];
+    var optionsKey = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];
 
-    var loadJoined = false;
+    var loadJoined = Object.prototype.hasOwnProperty.call(req.query, "join");
+
     for (var v in req.query) {
-        if (test.indexOf(v) !== -1) {
-            options[v] = req.query[v];
-        }
-        if ("join" == v) {
-            loadJoined = true;
+        if (optionsKey.indexOf(v) !== -1) {
+            options[v] = +req.query[v];
         }
     }
 
@@ -52,6 +50,8 @@ function handleGet(req, res, next) {
             options = util.parseJSON(body[1], next);
         }
     }
+
+    debug(options);
 
     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
         var collection = db.collection(req.params.collection);
@@ -76,7 +76,7 @@ function handleGet(req, res, next) {
                     if (docs.length > 0 && loadJoined) {
                         docs.forEach(function (doc) {
                             util.loadJoinedObject(doc, req.params.db, config, function (doc) {
-                                result.push(doc);//util.flavorize(doc, "out"));
+                                result.push(doc);
                                 if (--count == 0) {
                                     res.json(result, { 'content-type': 'application/json; charset=utf-8' });
                                 }
@@ -95,6 +95,7 @@ function handleGet(req, res, next) {
 //get
 server.get('/_data/:db/:collection/:id?', handleGet);
 server.get('/_data/:db/:collection', handleGet);
+
 
 //insert
 server.post('/_data/:db/:collection', function (req, res) {
@@ -190,6 +191,15 @@ server.get('/_meta/:db/collections', function (req, res) {
             db.close();
         });
     });
+});
+
+server.get('/_meta/:db/:collection/count', function (req, res, next) {
+    MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+        var collection = db.collection(req.params.collection);
+        collection.count(function (err, count) {
+            res.json({count: count}, {'content-type': 'application/json; charset=utf-8' });
+        });
+    })
 });
 
 //serve static

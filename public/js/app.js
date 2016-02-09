@@ -15,12 +15,9 @@ app.factory("appService", ["$http", function ($http) {
         });
     };
 
-    obj.getContent = function (database, collection, callback) {
-        // $http.get("/_data/" + database + "/" + collection, { 'Content-Type': 'application/json' }).then(function (response) {
-            
-        // });
+    obj.getContent = function (database, collection, options, callback) {
         $http({
-            url: "/_data/" + database + "/" + collection,
+            url: "/_data/" + database + "/" + collection + options,
             method: "GET",
             headers: {
                 "Content-Type": "application/json"
@@ -29,55 +26,23 @@ app.factory("appService", ["$http", function ($http) {
         }).success(function (response) {
             callback(response);
         }).error(function (error) {
-            callback(error);
+            callback(error, true);
         });
+    };
+
+    obj.getCount = function (database, collection, callback) {
+        $http.get("/_meta/" + database + "/" + collection + "/count", { headers: { "content-type": "application/json" } }).then(
+            function (response) {
+                callback(response);
+            });
     };
 
     return obj;
 }]);
 
 app.config(["$routeProvider", "$locationProvider", function ($routeProvider, $locationProvider) {
-    // $routeProvider.when('/WayBill', {
-    //     templateUrl: 'way-bill-list.html',
-    //     controller: 'wayBillListController',
-    //     resolve: function () {
-    //         return [{ name: "Товарные накладные", path: "/WayBill" }];
-    //     }
-    // }).when('/WayBill/:fsrarid/:date/:waybillnum', {
-    //     templateUrl: 'way-bill-detail.html',
-    //     controller: 'wayBillDetailController',
-    //     resolve: function ($route, $filter) {
-    //         return [
-    //             { name: "Товарные накладные", path: "/WayBill" }, 
-    //             { name: "Накладная №" + $route.current.params.waybillnum + " от " + $filter("date")($route.current.params.date, "dd.MM.yyyy"), path: "/WayBill/" + $route.current.params.fsrarid + '/' + $route.current.params.date + '/' + $route.current.params.waybillnum }];
-    //     }
-    // }).when('/rests', {
-    //     templateUrl: 'rests.html',
-    //     controller: 'restsController',
-    //     resolve: function() {
-    //         return [{ name: "Остатки", path: "/rests" }];
-    //     }
-    // }).when('/subject', {
-    //     templateUrl: 'subject.html',
-    //     controller: 'subjectController',
-    //     resolve: function() {
-    //         return [{ name: "Пользователь", path: "/subject" }];
-    //     }
-    // }).when('/', {
-    //     templateUrl: 'subject.html',
-    //     controller: 'subjectController',
-    //     resolve: function() {
-    //         return [{ name: "Пользователь", path: "/subject" }];
-    //     }
-    // });
-    
     $routeProvider.when('/data/:database', {
-        //templateUrl: 'way-bill-list.html',
         controller: 'appController'
-        // resolve: function () {
-        //     console.log("meta");
-        //     //return [{ name: "Товарные накладные", path: "/WayBill" }];
-        // }
     });
 
     $routeProvider.when('/data/:database/:collection', {
@@ -92,20 +57,10 @@ app.config(["$routeProvider", "$locationProvider", function ($routeProvider, $lo
         enabled: true,
         requireBase: false
     });
-    // $locationProvider.html5Mode(true);
+    $locationProvider.html5Mode(true);
 }]);
 
 
 app.run(["$rootScope", "$location", "$window", "$route", "$filter", function ($rootScope, $location, $window, $route, $filter) {
-    // $rootScope.breadCrumbs = [];
-    // $rootScope.$on("$locationChangeSuccess", function (event, next, current) {
-    //     // $rootScope.path
-    //     console.log("change");
-    //     if ($route.current && angular.isFunction($route.current.$$route.resolve)) {
-    //         $route.current.$$route.resolve($route, $filter);
-    //         // $rootScope.breadCrumbs = $route.current.$$route.resolve($route, $filter);            
-    //     } else {
-    //         // $rootScope.breadCrumbs = [];
-    //     }
-    // });
+
 }]);
