@@ -1,10 +1,10 @@
 var appModule = angular.module("appModule", []);
 
 appModule.controller("appController", function ($scope, $location, $anchorScroll, $timeout, $interval, $route, appService) {
-    
+
     $scope.databases = [];
     $scope.databaseSelected = null;
-    
+
     $scope.collections = [];
     $scope.collectionSelected = null;
     $scope.collectionContent = null;
@@ -12,7 +12,7 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
     $scope.pageSize = 20;
     $scope.contentPages = 0;
     $scope.contentPageNum = 1;
-    $scope.contentCount = 0;    
+    $scope.contentCount = 0;
 
     appService.getDatabases(function (data) {
         $scope.databases = data.databases;
@@ -30,20 +30,14 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
             $scope.databaseSelected = null;
             return;
         }
-        $scope.databaseSelected = $route.current.params.database;
-        if ($route.current.params.collection) {
-            $scope.collectionSelected = null;
-            $scope.collectionContent = null;
-            appService.getCollections($scope.databaseSelected, function (data) {
-                $scope.collections = data;
+        var db = $route.current.params.database;
+        appService.getCollections(db, function (data) {
+            $scope.databaseSelected = db;
+            $scope.collections = data;
+            if ($route.current.params.collection) {
                 selectCollection($scope.databaseSelected, $route.current.params.collection);
-            });
-        } else {
-            $scope.collectionSelected = null;
-            appService.getCollections($scope.databaseSelected, function (data) {
-                $scope.collections = data;
-            });
-        }
+            }
+        });
     });
 
     $scope.gotoPage = function (page) {
@@ -77,7 +71,38 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
                 });
         });
     }
+
+    $scope.refreshContent = function () {
+        selectCollection($scope.databaseSelected, $scope.collectionSelected);
+    };
+
+    $scope.dbTree = [];
+    getTreeDB(appService, function (data) {
+        $scope.dbTree = data;
+    });
 });
+
+function getTreeDB(appService, callback) {
+    var result = [];
+    appService.getDatabases(function (data) {
+        var dbs = data.databases;
+        var count = dbs.length;
+        for (var i in dbs) {
+            getTreeCollections(appService, dbs[i].name, function (childrens, dbName) {
+                result.push({ name: dbName, childrens: childrens });
+                if (--count == 0) {
+                    callback(result);
+                }
+            });
+        }
+    });
+}
+
+function getTreeCollections(appService, dbName, callback) {
+    appService.getCollections(dbName, function (data) {
+        callback(data, dbName);
+    });
+}
 
 function processContent(data) {
     var tmpFields = {};
