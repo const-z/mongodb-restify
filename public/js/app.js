@@ -1,4 +1,4 @@
-var app = angular.module("MongoDBRestify", ["appModule", "ngRoute", "ui.bootstrap"]);
+var app = angular.module("DataResourceDashboard", ["appModule", "ngRoute", "ui.bootstrap"]);
 
 app.factory("appService", ["$http", function ($http) {
     var obj = {};

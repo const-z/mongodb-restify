@@ -10,7 +10,7 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
     $scope.collectionContent = null;
 
     $scope.pageSize = 20;
-    $scope.contentPages = 0;
+    $scope.contentPages = 1;
     $scope.contentPageNum = 1;
     $scope.contentCount = 0;
 
@@ -25,19 +25,20 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
             $location.search('url', null);
             $location.path(url);
         }
-
-        if (!$route.current) {
+        $scope.contentPages = 0;
+        $scope.contentPageNum = 1;
+        $scope.contentCount = 0;
+        if (!!$route.current && $route.current.params.database) {
+            $scope.databaseSelected = $route.current.params.database;
+        } else {
             $scope.databaseSelected = null;
             return;
+        }        
+        if ($route.current.params.collection) {
+            selectCollection($scope.databaseSelected, $route.current.params.collection);
+        } else {
+            $scope.collectionSelected = null;
         }
-        var db = $route.current.params.database;
-        appService.getCollections(db, function (data) {
-            $scope.databaseSelected = db;
-            $scope.collections = data;
-            if ($route.current.params.collection) {
-                selectCollection($scope.databaseSelected, $route.current.params.collection);
-            }
-        });
     });
 
     $scope.gotoPage = function (page) {

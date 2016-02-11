@@ -202,6 +202,9 @@ server.get('/_meta/:db/:collection/count', function (req, res, next) {
     })
 });
 
+//TODO: метод создания БД
+//TODO: сохранять/читать описание БД
+
 //serve static
 server.get("/.*", restify.serveStatic({
     directory: './public',
