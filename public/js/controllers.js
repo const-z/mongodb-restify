@@ -19,7 +19,6 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
     });
 
     $scope.$on("$locationChangeSuccess", function (event, next, current) {
-
         var url = $location.search().url;
         if (url) {
             $location.search('url', null);
@@ -33,7 +32,7 @@ appModule.controller("appController", function ($scope, $location, $anchorScroll
         } else {
             $scope.databaseSelected = null;
             return;
-        }        
+        }
         if ($route.current.params.collection) {
             selectCollection($scope.databaseSelected, $route.current.params.collection);
         } else {
