@@ -18,53 +18,14 @@
 </head>
 
 <body ng-app="DataResourceDashboard" ng-cloak ng-controller="appController">
-
-    <nav class="navbar navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false"
-                aria-controls="navbar">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">DataResource</a>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="#">{{(contentPageNum-1) * pageSize + 1}} - {{(contentPageNum-1) * pageSize + 20}} / {{contentCount}}</a></li>
-                    <li ng-class="{'disabled':contentPageNum == 1}">
-                        <a href="#" ng-click="gotoPage(contentPageNum - 1)">&laquo;</a>
-                    </li>
-                    <li ng-class="{'disabled':contentPageNum == contentPages}">
-                        <a href="#" ng-click="gotoPage(contentPageNum + 1)">&raquo;</a>
-                    </li>
-                    <li><a href="#"><i class="fa fa-plus"></i></a></li>
-                    <li><a href="#" ng-click="refreshContent()"><i class="fa fa-refresh"></i></a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                            <i class="fa fa-eye"></i>
-                        </a>
-                        <ul class="dropdown-menu" role="menu">
-                            <li><a href="#"><i class="fa fa-table"></i> Таблица</a></li>
-                            <li><a href="#"><i class="fa fa-sitemap"></i> Дерево</a></li>
-                            <li><a href="#"><i class="fa fa-bars"></i> Одна запись</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-3 col-md-2 sidebar">
                 <ul class="nav nav-pills nav-stacked">
-                    <li role="presentation" ng-repeat="d in dbTree | orderBy:'name'" ng-class="{'active':databaseSelected === d.name}">
+                    <li role="presentation" ng-repeat="d in dbTree | orderBy:'name'" ng-class="{'active':databaseSelected.name === d.name}">
                         <a href="/data/{{d.name}}" style="margin: 3px">{{d.name}}</a>
                         <ul style="padding-left: 10px" class="nav nav-pills nav-stacked">
-                            <li role="presentation" ng-repeat="c in d.childrens" ng-class="{'active':collectionSelected === c.name}">
+                            <li role="presentation" ng-repeat="c in d.childrens" ng-class="{'active':collectionSelected.name === c.name}">
                                 <a href="/data/{{d.name}}/{{c.name}}" style="margin: 3px">{{c.name}}</a>
                             </li>
                         </ul>
@@ -72,33 +33,118 @@
                 </ul>
             </div>
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-                <div class="row">
-                    <div class="col-lg-8 col-md-8 col-xs-8">
-                        <h1>{{databaseSelected}}.{{collectionSelected}}</h1>
+                <div>
+                    <ul class="nav nav-pills invisible" style="padding-top: 40px">
+                        <li><a href="#"><i class="fa fa-info"></i></a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-offset-3 col-md-offset-2 footer">
+                    <ul class="nav nav-pills" style="float: right">
+                        <li>
+                            <p class="navbar-text">
+                                {{(collectionSelected.pageNum - 1) * pageSize + 1}} - {{(collectionSelected.pageNum-1) * pageSize + 20}} / {{collectionSelected.stats.count}}
+                            </p>
+                        </li>
+                        <li ng-class="{'disabled':collectionSelected.pageNum == 1}">
+                            <a href="#" ng-click="gotoPage(collectionSelected.pageNum - 1)">&laquo;</a>
+                        </li>
+                        <li ng-class="{'disabled':collectionSelected.pageNum == collectionSelected.pages}">
+                            <a href="#" ng-click="gotoPage(collectionSelected.pageNum + 1)">&raquo;</a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-plus"></i></a></li>
+                        <li><a href="#" ng-click="refreshContent()"><i class="fa fa-refresh"></i></a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-offset-3 col-md-offset-2 header">
+                    <h2 style="margin-top: 0; margin-bottom: 0; float: left">{{databaseSelected.name}}.{{collectionSelected.name}} &nbsp;</h2>
+                    <!--<ul class="nav nav-pills" style="float: right">
+                        <li>
+                            <p class="navbar-text">
+                                {{(collectionSelected.pageNum - 1) * pageSize + 1}} - {{(collectionSelected.pageNum-1) * pageSize + 20}} / {{collectionSelected.stats.count}}
+                            </p>
+                        </li>
+                        <li ng-class="{'disabled':collectionSelected.pageNum == 1}">
+                            <a href="#" ng-click="gotoPage(collectionSelected.pageNum - 1)">&laquo;</a>
+                        </li>
+                        <li ng-class="{'disabled':collectionSelected.pageNum == collectionSelected.pages}">
+                            <a href="#" ng-click="gotoPage(collectionSelected.pageNum + 1)">&raquo;</a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-plus"></i></a></li>
+                        <li><a href="#" ng-click="refreshContent()"><i class="fa fa-refresh"></i></a></li>
+                    </ul>-->
+                    <ul class="nav nav-pills" ng-init="tab='info'" style="float: left">
+                        <li ng-class="{'active':tab==='info'}"><a href="#" title="Информация" ng-click="tab='info'"><i class="fa fa-info"></i></a></li>
+                        <li ng-class="{'active':tab==='content'}"><a href="#" title="Данные" ng-click="tab='content'"><i class="fa fa-database"></i></a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <div class="row" ng-if="tab==='info'">
+                        <table class="table table-striped table-hover">
+                            <tr>
+                                <td>Количество записей</td>
+                                <td>{{collectionSelected.stats.count}}</td>
+                            </tr>
+                            <tr>
+                                <td>Размер</td>
+                                <td>{{collectionSelected.stats.size}}</td>
+                            </tr>
+                            <tr>
+                                <td>Размер хранилища</td>
+                                <td>{{collectionSelected.stats.storageSize}}</td>
+                            </tr>
+                            <tr>
+                                <td>Средний размер объекта</td>
+                                <td>{{collectionSelected.stats.avgObjSize}}</td>
+                            </tr>
+                            <tr>
+                                <td>Размер индекса</td>
+                                <td>{{collectionSelected.stats.totalIndexSize}}</td>
+                            </tr>
+                        </table>
                     </div>
-                    <div class="col-lg-3 col-md-3 col-xs-3 text-right">
-                        <ul class="nav nav-tabs">
-                            <li class="active"><a href="#home" data-toggle="tab">Home</a></li>
-                            <li><a href="#profile" data-toggle="tab">Profile</a></li>                       
+
+                    <div class="row" ng-if="tab==='content' && collectionSelected.name">
+                        <!--<ul class="nav navbar-nav navbar-right">-->
+                        <!--<ul class="nav nav-pills" style="float: right">
+                            <li>
+                                <p class="navbar-text">
+                                    {{(collectionSelected.pageNum - 1) * pageSize + 1}} - {{(collectionSelected.pageNum-1) * pageSize + 20}} / {{collectionSelected.stats.count}}
+                                </p>
+                            </li>
+                            <li ng-class="{'disabled':collectionSelected.pageNum == 1}">
+                                <a href="#" ng-click="gotoPage(collectionSelected.pageNum - 1)">&laquo;</a>
+                            </li>
+                            <li ng-class="{'disabled':collectionSelected.pageNum == collectionSelected.pages}">
+                                <a href="#" ng-click="gotoPage(collectionSelected.pageNum + 1)">&raquo;</a>
+                            </li>
+                            <li><a href="#"><i class="fa fa-plus"></i></a></li>
+                            <li><a href="#" ng-click="refreshContent()"><i class="fa fa-refresh"></i></a></li>
+                        </ul>-->
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th ng-repeat="f in collectionSelected.content.fields track by $index">{{f}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="d in collectionSelected.content.rows track by $index">
+                                    <td ng-repeat="k in collectionSelected.content.fields track by $index">{{d[k]}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <ul class="nav nav-pills invisible">
+                            <li><a href="#"><i class="fa fa-info"></i></a></li>
                         </ul>
                     </div>
                 </div>
-                <hr/>
-                <div ng-if="collectionSelected">
-                    <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th ng-repeat="f in collectionContent.fields track by $index">{{f}}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr ng-repeat="d in collectionContent.content track by $index">
-                                <td ng-repeat="k in collectionContent.fields track by $index">{{d[k]}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <!--<div class="row">
+                    <p ng-repeat="rl in requestsLog">{{rl.method}} {{rl.url}}</p>
+                </div>-->
             </div>
+
         </div>
     </div>
 

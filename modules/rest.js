@@ -197,7 +197,27 @@ server.get('/_meta/:db/:collection/count', function (req, res, next) {
     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
         var collection = db.collection(req.params.collection);
         collection.count(function (err, count) {
-            res.json({count: count}, {'content-type': 'application/json; charset=utf-8' });
+            res.json({ count: count }, { 'content-type': 'application/json; charset=utf-8' });
+            db.close();
+        });
+    })
+});
+
+server.get('/_meta/:db/stats', function (req, res, next) {
+    MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+        db.stats(function (err, stats) {
+            res.json(stats, { 'content-type': 'application/json; charset=utf-8' });
+            db.close();
+        })
+    });
+});
+
+server.get('/_meta/:db/:collection/stats', function (req, res, next) {
+    MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+        var collection = db.collection(req.params.collection);
+        collection.stats(function (err, stats) {
+            res.json(stats, { 'content-type': 'application/json; charset=utf-8' });
+            db.close();
         });
     })
 });

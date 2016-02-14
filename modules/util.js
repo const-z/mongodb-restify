@@ -5,10 +5,10 @@ var MongoClient = require("mongodb").MongoClient;
 var util = function () {
     var obj = this;
 
-    obj.loadJoinedObject = function (doc, dbName, config, callback) {
+    obj.loadJoinedObject = function loadJoinedObject(doc, dbName, config, callback) {
         var collectionsNames = [];
         for (var f in doc) {
-            if (f !== "_id" && f.indexOf("_id") > -1 && typeof doc[f] != "object") {
+            if (f !== "_id" && f.indexOf("_id") > -1) {
                 collectionsNames.push(f.slice(0, -3));
             }
         }
@@ -20,28 +20,41 @@ var util = function () {
         }
 
         for (var i in collectionsNames) {
-            var valueId = doc[collectionsNames[i] + "_id"];
-            var query = {
-                '_id': isNaN(valueId) ? new BSON.ObjectID(valueId) : +valueId
-            };
-            MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
-                var collection = db.collection(collectionsNames[i]);
-                collection.find(query, {}, function (err, cursor) {
-                    cursor.toArray(function (err, docs) {
-                        if (docs.length > 0) {
-                            doc[collectionsNames[i] + "_id"] = docs[0];
-                            if (--count == 0) {
-                                callback(doc);
-                            }
-                        }
-                        db.close();
-                    });
+            loadElement(dbName, config, collectionsNames[i], doc, function (collectionName, ldoc) {
+                debug(collectionName);
+                doc[collectionName + "_id"] = ldoc;
+                loadJoinedObject(ldoc, dbName, config, function (lldoc) {                    
+                    if (--count == 0) {
+                        callback(lldoc);
+                    }
                 });
             });
         }
     };
 
-    obj.saveJoinedObject = function (doc, dbName, config, callback) {
+    function loadElement(dbName, config, collectionName, doc, callback) {
+        var valueId = doc[collectionName + "_id"];
+        var query = {
+            '_id': isNaN(valueId) ? new BSON.ObjectID(valueId) : +valueId
+        };
+        MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
+            var collection = db.collection(collectionName);
+            collection.find(query, {}, function (err, cursor) {
+                cursor.toArray(function (err, docs) {
+                    // if (docs.length > 0) {
+                    //     // doc[collectionsNames[i] + "_id"] = docs[0];
+                    //     // if (--count == 0) {
+                    //     //     callback(doc);
+                    //     // }
+                    // }
+                    callback(collectionName, docs[0]);
+                    db.close();
+                });
+            });
+        });
+    }
+
+    obj.saveJoinedObject = function saveJoinedObject(doc, dbName, config, callback) {
         var collectionsNames = [];
         for (var f in doc) {
             if (f !== "_id" && f.indexOf("_id") > -1) {
@@ -55,35 +68,45 @@ var util = function () {
         }
         for (var i in collectionsNames) {
             var joinedObject = doc[collectionsNames[i] + "_id"];
-            joinedObject = Array.isArray(joinedObject) ? joinedObject[0] : joinedObject;
-            if (joinedObject._id) {
-                joinedObject._id = isNaN(joinedObject._id) ? new BSON.ObjectID(joinedObject._id) : +joinedObject._id;
-            }
             if (typeof joinedObject == "object") {
-                MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
-                    var collection = db.collection(collectionsNames[i]);
-                    collection.insert(joinedObject, function (err, docs) {
-                        if (err && err.code == 11000) {
-                            collection.updateOne({ "_id": joinedObject._id }, { $set: joinedObject }, function (err, docs) {
-                                doc[collectionsNames[i] + "_id"] = joinedObject._id;
-                                if (--count == 0) {
-                                    callback(doc);
-                                }
-                                db.close();
-                            });
-                        } else {
-                            doc[collectionsNames[i] + "_id"] = docs.insertedIds[0];
-                            if (--count == 0) {
-                                callback(doc);
-                            }
-                            db.close();
+                joinedObject = Array.isArray(joinedObject) ? joinedObject[0] : joinedObject;
+                saveJoinedObject(joinedObject, dbName, config, function (jdoc) {
+                    joinedObject = jdoc;
+                    if (joinedObject._id) {
+                        joinedObject._id = isNaN(joinedObject._id) ? new BSON.ObjectID(joinedObject._id) : +joinedObject._id;
+                    }
+                    //
+                    saveElement(dbName, config, collectionsNames[i], doc, joinedObject, function (dbName, collectionName, id) {
+                        doc[collectionName + "_id"] = id;
+                        if (--count == 0) {
+                            callback(doc);
                         }
                     });
                 });
+            } else {
+                if (--count == 0) {
+                    callback(doc);
+                }
             }
         }
-
     };
+
+    function saveElement(dbName, config, collectionName, doc, subDoc, callback) {
+        MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
+            var collection = db.collection(collectionName);
+            collection.insert(subDoc, function (err, docs) {
+                if (err && err.code == 11000) {
+                    collection.updateOne({ "_id": subDoc._id }, { $set: subDoc }, function (err, docs) {
+                        db.close();
+                        callback(doc, collectionName, subDoc._id);
+                    });
+                } else {
+                    db.close();
+                    callback(doc, collectionName, docs.insertedIds[0]);
+                }
+            });
+        });
+    }
 
     obj.cleanParams = function (params) {
         var clean = JSON.parse(JSON.stringify(params));

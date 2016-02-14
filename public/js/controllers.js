@@ -1,79 +1,88 @@
 var appModule = angular.module("appModule", []);
 
-appModule.controller("appController", function ($scope, $location, $anchorScroll, $timeout, $interval, $route, appService) {
+appModule.controller("appController", function ($scope, $location, $route, appService) {
 
     $scope.databases = [];
-    $scope.databaseSelected = null;
+    $scope.databaseSelected = {};
 
     $scope.collections = [];
-    $scope.collectionSelected = null;
-    $scope.collectionContent = null;
+    $scope.collectionSelected = {};
 
     $scope.pageSize = 20;
-    $scope.contentPages = 1;
-    $scope.contentPageNum = 1;
-    $scope.contentCount = 0;
 
     appService.getDatabases(function (data) {
         $scope.databases = data.databases;
     });
 
     $scope.$on("$locationChangeSuccess", function (event, next, current) {
+        // console.log($scope.requestsLog);
         var url = $location.search().url;
         if (url) {
             $location.search('url', null);
             $location.path(url);
         }
-        $scope.contentPages = 0;
-        $scope.contentPageNum = 1;
-        $scope.contentCount = 0;
         if (!!$route.current && $route.current.params.database) {
-            $scope.databaseSelected = $route.current.params.database;
+            selectDatabase($route.current.params.database);
         } else {
-            $scope.databaseSelected = null;
+            selectDatabase(null);
             return;
         }
         if ($route.current.params.collection) {
-            selectCollection($scope.databaseSelected, $route.current.params.collection);
+            selectCollection($scope.databaseSelected.name, $route.current.params.collection);
         } else {
-            $scope.collectionSelected = null;
+            selectCollection(null);
         }
     });
 
     $scope.gotoPage = function (page) {
         if (page < 1) {
             page = 1;
-        } else if (page > $scope.contentPages) {
-            page = $scope.contentPages;
+        } else if (page > $scope.collectionSelected.pages) {
+            page = $scope.collectionSelected.pages;
         }
-        $location.path("/data/" + $scope.databaseSelected + "/" + $scope.collectionSelected + "/page/" + page);
+        $location.path("/data/" + $scope.databaseSelected.name + "/" + $scope.collectionSelected.name + "/page/" + page);
     };
 
-    function selectCollection(database, collection) {
-        appService.getCount(database, collection, function (data) {
-            $scope.contentPages = Math.ceil(data.count / $scope.pageSize);
-            $scope.contentCount = data.count;
-            $scope.collectionSelected = collection;
+    function selectDatabase(database) {
+        if (!database) {
+            $scope.databaseSelected = {};
+            return;
+        }
+        $scope.databaseSelected.name = $route.current.params.database;
+        appService.getDatabaseStats($scope.databaseSelected.name, function (stats) {
+            $scope.databaseSelected.stats = stats;
+        });
+    }
 
-            $scope.contentPageNum = !!$route.current.params.pageNum ? +$route.current.params.pageNum : 1;
-            if ($scope.contentPageNum < 1) {
+    function selectCollection(database, collection) {
+        if (!database) {
+            $scope.collectionSelected = {};
+            return;
+        }
+        appService.getCollectionStats(database, collection, function (stats) {
+            $scope.collectionSelected.stats = stats;
+            $scope.collectionSelected.pages = Math.ceil(stats.count / $scope.pageSize);
+            $scope.collectionSelected.name = collection;
+
+            $scope.collectionSelected.pageNum = !!$route.current.params.pageNum ? +$route.current.params.pageNum : 1;
+            if ($scope.collectionSelected.pageNum < 1) {
                 $scope.gotoPage(1);
                 return;
-            } else if ($scope.contentPageNum > $scope.contentPages) {
-                $scope.gotoPage($scope.contentPages);
+            } else if ($scope.collectionSelected.pageNum > $scope.contentPages) {
+                $scope.gotoPage($scope.collectionSelected.pages);
                 return;
             }
 
-            appService.getContent($scope.databaseSelected, $scope.collectionSelected,
-                "?limit=" + $scope.pageSize + "&skip=" + (($scope.contentPageNum - 1) * $scope.pageSize),
+            appService.getContent(database, collection,
+                "?limit=" + $scope.pageSize + "&skip=" + (($scope.collectionSelected.pageNum - 1) * $scope.pageSize),
                 function (data) {
-                    $scope.collectionContent = processContent(data);
+                    $scope.collectionSelected.content = processContent(data);
                 });
         });
     }
 
     $scope.refreshContent = function () {
-        selectCollection($scope.databaseSelected, $scope.collectionSelected);
+        selectCollection($scope.databaseSelected.name, $scope.collectionSelected.name);
     };
 
     $scope.dbTree = [];
@@ -117,5 +126,5 @@ function processContent(data) {
     for (var i in fkeys) {
         fields.push(fkeys[i]);
     }
-    return { fields: fields, content: data };
+    return { fields: fields, rows: data };
 }

@@ -37,10 +37,24 @@ app.factory("appService", ["$http", function ($http) {
             });
     };
 
+    obj.getDatabaseStats = function (database, callback) {
+        $http.get("/_meta/" + database + "/stats", { headers: { "content-type": "application/json" } }).then(
+            function (response) {
+                callback(response.data);
+            });
+    };
+
+    obj.getCollectionStats = function (database, collection, callback) {
+        $http.get("/_meta/" + database + "/" + collection + "/stats", { headers: { "content-type": "application/json" } }).then(
+            function (response) {
+                callback(response.data);
+            });
+    };
+
     return obj;
 }]);
 
-app.config(["$routeProvider", "$locationProvider", function ($routeProvider, $locationProvider) {
+app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider) {
     $routeProvider.when('/data/:database', {
         controller: 'appController'
     });
@@ -48,7 +62,7 @@ app.config(["$routeProvider", "$locationProvider", function ($routeProvider, $lo
     $routeProvider.when('/data/:database/:collection', {
         controller: 'appController'
     });
-    
+
     $routeProvider.when('/data/:database/:collection/page/:pageNum', {
         controller: 'appController'
     });
@@ -62,8 +76,29 @@ app.config(["$routeProvider", "$locationProvider", function ($routeProvider, $lo
         requireBase: false
     });
     $locationProvider.html5Mode(true);
-}]);
 
+    ///
+
+    // $provide.factory('LoggingHttpInterceptor', function ($q, $rootScope) {
+    //     $rootScope.requestsLog = [];
+    //     return {
+    //         request: function (config) {
+    //             $rootScope.requestsLog.push(config);
+    //             return config || $q.when(config);
+    //         },
+    //         requestError: function (rejection) {
+    //             return $q.reject(rejection);
+    //         },
+    //         response: function (response) {
+    //             return response || $q.when(response);
+    //         },
+    //         responseError: function (rejection) {
+    //             return $q.reject(rejection);
+    //         }
+    //     };
+    // });
+    // $httpProvider.interceptors.push('LoggingHttpInterceptor');
+});
 
 app.run(["$rootScope", "$location", "$window", "$route", "$filter", function ($rootScope, $location, $window, $route, $filter) {
 
