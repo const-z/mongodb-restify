@@ -51,8 +51,6 @@ function handleGet(req, res, next) {
         }
     }
 
-    debug(options);
-
     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
         var collection = db.collection(req.params.collection);
         collection.find(query, options, function (err, cursor) {

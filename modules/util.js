@@ -21,11 +21,10 @@ var util = function () {
 
         for (var i in collectionsNames) {
             loadElement(dbName, config, collectionsNames[i], doc, function (collectionName, ldoc) {
-                debug(collectionName);
-                doc[collectionName + "_id"] = ldoc;
-                loadJoinedObject(ldoc, dbName, config, function (lldoc) {                    
+                loadJoinedObject(ldoc, dbName, config, function (lldoc) {
+                    doc[collectionName + "_id"] = lldoc;
                     if (--count == 0) {
-                        callback(lldoc);
+                        callback(doc);
                     }
                 });
             });
@@ -41,12 +40,6 @@ var util = function () {
             var collection = db.collection(collectionName);
             collection.find(query, {}, function (err, cursor) {
                 cursor.toArray(function (err, docs) {
-                    // if (docs.length > 0) {
-                    //     // doc[collectionsNames[i] + "_id"] = docs[0];
-                    //     // if (--count == 0) {
-                    //     //     callback(doc);
-                    //     // }
-                    // }
                     callback(collectionName, docs[0]);
                     db.close();
                 });
