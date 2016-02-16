@@ -33,6 +33,31 @@
                 </ul>
             </div>
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+<<<<<<< HEAD
+=======
+                <div>
+                    <ul class="nav nav-pills invisible" style="padding-top: 40px">
+                        <li><a href="#"><i class="fa fa-info"></i></a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-offset-3 col-md-offset-2 footer">
+                    <ul class="nav nav-pills" style="float: left">
+                        <li>
+                            <p class="navbar-text">
+                                {{(collectionSelected.pageNum - 1) * pageSize + 1}} - {{(collectionSelected.pageNum - 1) * pageSize + 20}} / {{collectionSelected.stats.count}}
+                            </p>
+                        </li>
+                        <li ng-class="{'disabled':collectionSelected.pageNum == 1}">
+                            <a href="#" ng-click="gotoPage(collectionSelected.pageNum - 1)">&laquo;</a>
+                        </li>
+                        <li ng-class="{'disabled':collectionSelected.pageNum == collectionSelected.pages}">
+                            <a href="#" ng-click="gotoPage(collectionSelected.pageNum + 1)">&raquo;</a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-plus"></i></a></li>
+                        <li><a href="#" ng-click="refreshContent()"><i class="fa fa-refresh"></i></a></li>
+                    </ul>
+                </div>
+>>>>>>> master
                 <div class="col-sm-offset-3 col-md-offset-2 header">
                     <h2 style="margin-top: 0; margin-bottom: 0; float: left">{{databaseSelected.name}}.{{collectionSelected.name}} &nbsp;</h2>
                     <!--<ul class="nav nav-pills" style="float: right">
@@ -55,7 +80,33 @@
                         <li ng-class="{'active':tab==='content'}"><a href="#" title="Данные" ng-click="tab='content'"><i class="fa fa-database"></i></a></li>
                     </ul>-->
                 </div>
+                <!--<div>-->
+                <div class="row" ng-if="tab==='info'">
+                    <table class="table table-striped table-hover">
+                        <tr>
+                            <td>Количество записей</td>
+                            <td>{{collectionSelected.stats.count}}</td>
+                        </tr>
+                        <tr>
+                            <td>Размер</td>
+                            <td>{{collectionSelected.stats.size}}</td>
+                        </tr>
+                        <tr>
+                            <td>Размер хранилища</td>
+                            <td>{{collectionSelected.stats.storageSize}}</td>
+                        </tr>
+                        <tr>
+                            <td>Средний размер объекта</td>
+                            <td>{{collectionSelected.stats.avgObjSize}}</td>
+                        </tr>
+                        <tr>
+                            <td>Размер индекса</td>
+                            <td>{{collectionSelected.stats.totalIndexSize}}</td>
+                        </tr>
+                    </table>
+                </div>
 
+<<<<<<< HEAD
                 <div class="row">
                     <div class="col-lg-3 col-md-4 col-xs-12" ng-repeat="c in databaseSelected.collections | orderBy:'name'">
                         <a class="link-card" href="/data/{{databaseSelected.name}}/{{c.name}}">
@@ -90,6 +141,8 @@
                     </div>
                 </div>
 
+=======
+>>>>>>> master
                 <div class="row" ng-if="tab==='content' && collectionSelected.name">
                     <!--<ul class="nav navbar-nav navbar-right">-->
                     <!--<ul class="nav nav-pills" style="float: right">
@@ -119,10 +172,22 @@
                             </tr>
                         </tbody>
                     </table>
+<<<<<<< HEAD
                 </div>
 
                 <!--<div class="col-sm-offset-3 col-md-offset-2 footer">
                     
+=======
+                </div>
+                <div>
+                    <ul class="nav nav-pills invisible">
+                        <li><a href="#"><i class="fa fa-info"></i></a></li>
+                    </ul>
+                </div>
+                <!--</div>-->
+                <!--<div class="row">
+                    <p ng-repeat="rl in requestsLog">{{rl.method}} {{rl.url}}</p>
+>>>>>>> master
                 </div>-->
             </div>
         </div>
