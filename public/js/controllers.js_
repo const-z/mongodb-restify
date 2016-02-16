@@ -10,9 +10,9 @@ appModule.controller("appController", function ($scope, $location, $route, appSe
 
     $scope.pageSize = 20;
 
-    appService.getDatabases(function (data) {
-        $scope.databases = data.databases;
-    });
+    // appService.getDatabases(function (data) {
+    //     $scope.databases = data.databases;
+    // });
 
     $scope.$on("$locationChangeSuccess", function (event, next, current) {
         // console.log($scope.requestsLog);
@@ -49,18 +49,9 @@ appModule.controller("appController", function ($scope, $location, $route, appSe
             return;
         }
 
-        $scope.databaseSelected.name = database;
+        $scope.databaseSelected.name = database;        
         appService.getDatabaseStats($scope.databaseSelected.name, function (stats) {
             $scope.databaseSelected.stats = stats;
-            appService.getCollections($scope.databaseSelected.name, function (data) {
-                $scope.databaseSelected.collections = data;
-                console.log($scope.databaseSelected.collections);
-                for (var i in data) {
-                    loadCollectionStats(appService, $scope.databaseSelected, i, function(index, stats) {
-                        $scope.databaseSelected.collections[index].stats = stats;    
-                    }); 
-                }                
-            });
         });
     }
 
@@ -95,17 +86,11 @@ appModule.controller("appController", function ($scope, $location, $route, appSe
         selectCollection($scope.databaseSelected.name, $scope.collectionSelected.name);
     };
 
-    // $scope.dbTree = [];
-    // getTreeDB(appService, function (data) {
-    //     $scope.dbTree = data;
-    // });
+    $scope.dbTree = [];
+    getTreeDB(appService, function (data) {
+        $scope.dbTree = data;
+    });
 });
-
-function loadCollectionStats(appService, database, collectionIndex, callback) {
-    appService.getCollectionStats(database.name, database.collections[collectionIndex].name, function (stats) {
-        callback(collectionIndex, stats);
-    });   
-}
 
 function getTreeDB(appService, callback) {
     var result = [];
