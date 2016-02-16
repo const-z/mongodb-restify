@@ -37,6 +37,7 @@ body {
 /* Hide for mobile, show later */
 .sidebar {
   display: none;
+  padding-top: 64px;
 }
 @media (min-width: 768px) {
   .sidebar {
@@ -47,9 +48,10 @@ body {
     z-index: 1000;
     display: block;
     padding: 20px;
+    padding-top: 64px;
     overflow-x: hidden;
     overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-    background-color: #0E2134;
+    background-color: #0E2134;    
     /*border-right: 1px solid #eee;*/
   }
 }
@@ -77,16 +79,34 @@ body {
  */
 
 .main {
-  /*padding: 20px;*/
+  /*padding: 20px;*/  
+  padding-top: 79px;
 }
+
+.header {
+    position: fixed;
+    right: 0px;
+    left: 0;
+    background-color: #0E2134;
+    top: 0;    
+    z-index: 99999;
+    height: 64px;
+    padding-left: 15px;
+}
+
+.header h2 {
+    line-height: 64px;
+}
+
 @media (min-width: 768px) {
   .main {
     padding-right: 40px;
     padding-left: 40px;
+    padding-top: 104px;    
   }
-}
-.main .page-header {
-  margin-top: 0;
+  .header {
+    padding-left: 40px;
+  }
 }
 
 
@@ -114,8 +134,6 @@ body {
     word-wrap: break-word;
 }
 
-/*   */
-
 .header {
     position: fixed;
     right: 0px;
@@ -133,5 +151,23 @@ body {
     background-color: #0E2134;
     bottom: 0;    
     z-index: 99999;
-    padding-left: 25px;
+}
+
+.card table {
+    margin: 0;
+}
+
+a.link-card {
+	text-decoration: none;
+	border: 0 none;
+    color: #fff;
+}
+a.link-card:hover {
+	text-decoration: none;
+	border: 0 none;
+    color: #fff;    
+}
+
+a.link-card:hover .card {
+    box-shadow: 0px 0px 10px #0E2134;   
 }
