@@ -1,6 +1,8 @@
+"use strict";
+
 var fs = require("fs");
 var mongodb = require("mongodb");
-var restify = module.exports.restify = require("restify");
+// var restify = module.exports.restify = require("restify");
 
 var DEBUGPREFIX = "DEBUG: ";
 
@@ -31,22 +33,27 @@ try {
 
 module.exports.config = config;
 
-var server = restify.createServer({
-//   certificate: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\public.pem'),
-//   key: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\private.pem'),
-  name: "mongodb-restify"
-});
-server.acceptable = ['application/json'];
-server.use(restify.acceptParser(server.acceptable));
-server.use(restify.bodyParser());
-server.use(restify.fullResponse());
-server.use(restify.queryParser());
-server.use(restify.jsonp());
+var DataRest = require('./modules/DataRest');
 
-module.exports.server = server;
+var dataRest = new DataRest(config);
+dataRest.start();
 
-require('./modules/rest');
+// var server = restify.createServer({
+// //   certificate: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\public.pem'),
+// //   key: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\private.pem'),
+//   name: "mongodb-restify"
+// });
+// server.acceptable = ['application/json'];
+// server.use(restify.acceptParser(server.acceptable));
+// server.use(restify.bodyParser());
+// server.use(restify.fullResponse());
+// server.use(restify.queryParser());
+// server.use(restify.jsonp());
 
-server.listen(config.server.port, function () {
-  console.log("%s listening at %s", server.name, server.url);
-});
+// module.exports.server = server;
+
+// require('./modules/rest');
+
+// server.listen(config.server.port, function () {
+//   console.log("%s listening at %s", server.name, server.url);
+// });

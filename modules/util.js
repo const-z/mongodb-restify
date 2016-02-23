@@ -63,18 +63,11 @@ var util = function () {
             var joinedObject = doc[collectionsNames[i] + "_id"];
             if (typeof joinedObject == "object") {
                 joinedObject = Array.isArray(joinedObject) ? joinedObject[0] : joinedObject;
-                saveJoinedObject(joinedObject, dbName, config, function (jdoc) {
-                    joinedObject = jdoc;
-                    if (joinedObject._id) {
-                        joinedObject._id = isNaN(joinedObject._id) ? new BSON.ObjectID(joinedObject._id) : +joinedObject._id;
+                saveElement(dbName, config, collectionsNames[i], doc, joinedObject, function (doc, collectionName, id) {
+                    doc[collectionName + "_id"] = id;
+                    if (--count == 0) {
+                        callback(doc);
                     }
-                    //
-                    saveElement(dbName, config, collectionsNames[i], doc, joinedObject, function (dbName, collectionName, id) {
-                        doc[collectionName + "_id"] = id;
-                        if (--count == 0) {
-                            callback(doc);
-                        }
-                    });
                 });
             } else {
                 if (--count == 0) {
@@ -85,19 +78,22 @@ var util = function () {
     };
 
     function saveElement(dbName, config, collectionName, doc, subDoc, callback) {
-        MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
-            var collection = db.collection(collectionName);
-            collection.insert(subDoc, function (err, docs) {
-                if (err && err.code == 11000) {
-                    collection.updateOne({ "_id": subDoc._id }, { $set: subDoc }, function (err, docs) {
+        obj.saveJoinedObject(subDoc, dbName, config, function (subDoc) {
+            MongoClient.connect(obj.connectionURL(dbName, config), function (err, db) {
+                var collection = db.collection(collectionName);
+                collection.insert(subDoc, function (err, docs) {
+                    if (err && err.code == 11000) {
+                        collection.updateOne({ "_id": subDoc._id }, { $set: subDoc }, function (err, docs) {
+                            db.close();
+                            callback(doc, collectionName, subDoc._id);
+                        });
+                    } else {
                         db.close();
-                        callback(doc, collectionName, subDoc._id);
-                    });
-                } else {
-                    db.close();
-                    callback(doc, collectionName, docs.insertedIds[0]);
-                }
+                        callback(doc, collectionName, docs.insertedIds[0]);
+                    }
+                });
             });
+
         });
     }
 

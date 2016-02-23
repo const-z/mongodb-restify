@@ -116,8 +116,9 @@ server.post('/_data/:db/:collection', function (req, res) {
         MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
             var collection = db.collection(req.params.collection);
             collection.insert(doc, function (err, docs) {
-                res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
+                //res.header('Location', '/' + req.params.db + '/' + req.params.collection + '/' + docs.insertedIds[0]);
                 res.set('content-type', 'application/json; charset=utf-8');
+                docs.result._id = docs.insertedIds[0];
                 res.json(201, docs.result);
                 db.close();
             });
@@ -222,6 +223,7 @@ server.get('/_meta/:db/:collection/stats', function (req, res, next) {
 
 //TODO: метод создания БД
 //TODO: сохранять/читать описание БД
+//TODO: 
 
 //serve static
 server.get("/.*", restify.serveStatic({
