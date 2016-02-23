@@ -113,27 +113,33 @@ class DataRest {
                     count++;
                 }
             }
-            for (let field in document) {
+            if (count == 0) {
+                callback(databaseName, collectionName, document);
+                return;
+            }
+            for (var field in document) {
                 let doc = document;
+                let f = field;
                 if (!field.endsWith("_id")) {
                     continue;
                 }
                 //this._insert(databaseName, field, doc[field], ()=>{});
-                proc(databaseName, field, doc[field], () => {
-                    doc[field] = "_id";
+                // console.log("f = " + f);
+                // console.log("doc = " + JSON.stringify(doc));
+                this._insert(databaseName, field, doc[field], (databaseName, collectionName, sdoc) => {
+                    //console.log("doc2 = " + JSON.stringify(doc));
+                    doc[f] = "_id";
                     if (--count === 0) {
-                        callback(databaseName, field, doc[field]);
+                        callback(databaseName, collectionName, sdoc);
                     }
-                });                
+                });
                 //callback(databaseName, field, doc[field]);
-            }
-            if (count == 0) {
-                callback(databaseName, collectionName, document);
             }
         };
 
         proc(databaseName, collectionName, document, (databaseName, collectionName, document) => {
-            console.dir(document);
+            console.log("saved "+JSON.stringify(document));
+            callback(databaseName, collectionName, document);
         });
 
     }
