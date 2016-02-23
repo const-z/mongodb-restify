@@ -54,10 +54,11 @@ class DataRest {
             return;
         }
         var reqdoc = Array.isArray(req.body) ? req.body[0] : req.body;
-        this._insert(req.params.db, req.params.collection, reqdoc, (docs) => {
+        this._insert(req.params.db, req.params.collection, reqdoc, (databaseName, collectionName, document) => {
             res.set('content-type', 'application/json; charset=utf-8');
             // docs.result._id = docs.insertedIds[0];
-            res.json(201, docs.result);
+            console.log("result " + JSON.stringify(document));
+            res.json(201, document.result);
         });
     }
 
@@ -106,6 +107,16 @@ class DataRest {
         //         });
         //     });
         
+        let save = (databaseName, collectionName, document, callback) => {
+            this._connect(databaseName, (db) => {
+                var collection = db.collection(collectionName);
+                collection.insert(document, (err, docs) => {
+                    db.close();
+                    callback(docs.insertedIds[0]);
+                });
+            });
+        }
+
         let proc = (databaseName, collectionName, document, callback) => {
             var count = 0;
             for (let field in document) {
@@ -117,28 +128,27 @@ class DataRest {
                 callback(databaseName, collectionName, document);
                 return;
             }
-            for (var field in document) {
+            for (let field in document) {
                 let doc = document;
-                let f = field;
+                //let f = field;
                 if (!field.endsWith("_id")) {
                     continue;
                 }
-                //this._insert(databaseName, field, doc[field], ()=>{});
                 // console.log("f = " + f);
-                // console.log("doc = " + JSON.stringify(doc));
+                // console.log("doc = " + JSON.stringify(doc[f]));
                 this._insert(databaseName, field, doc[field], (databaseName, collectionName, sdoc) => {
-                    //console.log("doc2 = " + JSON.stringify(doc));
-                    doc[f] = "_id";
+                    console.log("callback = " + JSON.stringify(sdoc));
+                    // save(databaseName, collectionName, )
+                    doc[field] = "_id";
                     if (--count === 0) {
-                        callback(databaseName, collectionName, sdoc);
+                        callback(databaseName, field, doc);
                     }
                 });
-                //callback(databaseName, field, doc[field]);
             }
         };
 
         proc(databaseName, collectionName, document, (databaseName, collectionName, document) => {
-            console.log("saved "+JSON.stringify(document));
+            console.log("saved " + JSON.stringify(document));
             callback(databaseName, collectionName, document);
         });
 
