@@ -26,8 +26,7 @@ class DataRest {
     }
 
     start() {
-        this._initStaticContent();
-        // this._initInsert();
+        this.server.get("/.*", this._onStaticContent());
         this.server.post('/_data/:db/:collection', this._onInsert.bind(this));
         this.server.listen(this.config.server.port, () => {
             console.log("%s listening at %s", this.server.name, this.server.url);
@@ -40,11 +39,11 @@ class DataRest {
         });
     }
 
-    _initStaticContent() {
-        this.server.get("/.*", restify.serveStatic({
+    _onStaticContent() {
+        return restify.serveStatic({
             directory: './public',
             default: 'index.html'
-        }));
+        });
     }
 
     _onInsert(req, res) {
@@ -54,102 +53,60 @@ class DataRest {
             return;
         }
         var reqdoc = Array.isArray(req.body) ? req.body[0] : req.body;
-        this._insert(req.params.db, req.params.collection, reqdoc, (databaseName, collectionName, document) => {
+        this._insert(req.params.db, req.params.collection, reqdoc, (id) => {
             res.set('content-type', 'application/json; charset=utf-8');
-            // docs.result._id = docs.insertedIds[0];
-            console.log("result " + JSON.stringify(document));
-            res.json(201, document.result);
+            res.json(201, id);
+        });
+    }
+
+
+    _save(databaseName, collectionName, document, callback) {
+        this._connect(databaseName, (db) => {
+            var collection = db.collection(collectionName);
+            collection.insert(document, (err, docs) => {
+                if (err && err.code == 11000) {
+                    collection.updateOne({ "_id": document._id }, { $set: document }, function (err, docs) {
+                        db.close();
+                        callback(document._id);
+                    });
+                } else {
+                    db.close();
+                    callback(docs.insertedIds[0]);
+                }                
+            });
         });
     }
 
     _insert(databaseName, collectionName, document, callback) {
-        // var count = 0;
-        // for (let field in document) {
-        //     if (field.endsWith("_id")) {
-        //         count++;
-        //     }
-        // }
-        // for (let field in document) {
-        //     let doc = document;
-        //     //let f = field;
-        //     if (field.endsWith("_id")) {
-        //         this._insert(databaseName, field, document[field], (saved) => {
-        //             doc[field] = saved.insertedIds[0];
-        //             console.log(doc[field]);
-        //             this._connect(databaseName, (db) => {
-        //                 var collection = db.collection(field);
-        //                 collection.insert(doc, (err, docs) => {
-        //                     db.close();
-        //                     if (--count == 0) {
-        //                         callback(docs);
-        //                     }
-        //                 });
-        //             });
-
-        //         });
-        //     }
-        // }
-        // if (count == 0) {
-        // this._connect(databaseName, (db) => {
-        //     var collection = db.collection(collectionName);
-        //     collection.insert(document, (err, docs) => {
-        //         db.close();
-        //         callback(docs);
-        //     });
-        // });
-        // }
-        
-        // this._connect(databaseName, (db) => {
-        //         var collection = db.collection(collectionName);
-        //         collection.insert(document, (err, docs) => {
-        //             db.close();
-        //             callback(docs);
-        //         });
-        //     });
-        
-        let save = (databaseName, collectionName, document, callback) => {
-            this._connect(databaseName, (db) => {
-                var collection = db.collection(collectionName);
-                collection.insert(document, (err, docs) => {
-                    db.close();
-                    callback(docs.insertedIds[0]);
-                });
-            });
-        }
-
-        let proc = (databaseName, collectionName, document, callback) => {
-            var count = 0;
+        let proc = (collectionName, document, callback) => {
+            let count = 0;
             for (let field in document) {
                 if (field.endsWith("_id")) {
                     count++;
                 }
             }
             if (count == 0) {
-                callback(databaseName, collectionName, document);
+                callback(collectionName, document);
                 return;
             }
             for (let field in document) {
-                let doc = document;
-                //let f = field;
                 if (!field.endsWith("_id")) {
                     continue;
                 }
-                // console.log("f = " + f);
-                // console.log("doc = " + JSON.stringify(doc[f]));
-                this._insert(databaseName, field, doc[field], (databaseName, collectionName, sdoc) => {
-                    console.log("callback = " + JSON.stringify(sdoc));
-                    // save(databaseName, collectionName, )
-                    doc[field] = "_id";
+                this._insert(databaseName, field, document[field], (id) => {
+                    document[field] = id;
                     if (--count === 0) {
-                        callback(databaseName, field, doc);
+                        callback(collectionName, document);
+                        return;
                     }
                 });
             }
         };
 
-        proc(databaseName, collectionName, document, (databaseName, collectionName, document) => {
-            console.log("saved " + JSON.stringify(document));
-            callback(databaseName, collectionName, document);
+        proc(collectionName, document, (cn, doc) => {
+            this._save(databaseName, cn, doc, (id) => {
+                callback(id);
+            });
         });
 
     }
