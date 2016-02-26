@@ -1,8 +1,6 @@
 "use strict";
 var restify = require("restify");
-var MongoClient = require("mongodb").MongoClient;
-// var _initStatic = Symbol("initStatis");
-//var private = new WeakMap();
+var mongoClient = require("mongodb").MongoClient;
 
 class DataRest {
 
@@ -34,7 +32,7 @@ class DataRest {
     }
 
     _connect(databaseName, callback) {
-        MongoClient.connect(this.connectionUrl + databaseName, (err, db) => {
+        mongoClient.connect(this.connectionUrl + databaseName, (err, db) => {
             callback(db);
         });
     }

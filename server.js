@@ -2,58 +2,25 @@
 
 var fs = require("fs");
 var mongodb = require("mongodb");
-// var restify = module.exports.restify = require("restify");
 
-var DEBUGPREFIX = "DEBUG: ";
+var DEBUGPREFIX = "DEBUG:";
 
-var config = {
-  "db": {
-    "port": 27017,
-    "host": "localhost"
-  },
-  "server": {
-    "port": 3500,
-    "address": "0.0.0.0"
-  },
-  "flavor": "mongodb",
-  "debug": false
-};
+var Config = require('./modules/config');
 
-var debug = module.exports.debug = function (str) {
-  if (config.debug) {
-    console.log(DEBUGPREFIX + JSON.stringify(str));
-  }
-};
+var config = new Config("/config.json");
 
-try {
-  config = JSON.parse(fs.readFileSync(process.cwd() + "/config.json"));
-} catch (e) {
-  debug("No config.json file found. Fall back to default config.");
+var debug = function(text) {
+    if (!config.debug) {
+        return;
+    }  
+    if (typeof text === "object") {
+        text = JSON.stringify(text);
+    } 
+    console.log("%s %s", DEBUGPREFIX, text);
 }
 
-module.exports.config = config;
+debug(config);
 
-var DataRest = require('./modules/DataRest');
-
+var DataRest = require('./modules/data-rest');
 var dataRest = new DataRest(config);
 dataRest.start();
-
-// var server = restify.createServer({
-// //   certificate: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\public.pem'),
-// //   key: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\private.pem'),
-//   name: "mongodb-restify"
-// });
-// server.acceptable = ['application/json'];
-// server.use(restify.acceptParser(server.acceptable));
-// server.use(restify.bodyParser());
-// server.use(restify.fullResponse());
-// server.use(restify.queryParser());
-// server.use(restify.jsonp());
-
-// module.exports.server = server;
-
-// require('./modules/rest');
-
-// server.listen(config.server.port, function () {
-//   console.log("%s listening at %s", server.name, server.url);
-// });

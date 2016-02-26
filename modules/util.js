@@ -1,3 +1,5 @@
+"use strict";
+
 var debug = module.parent.parent.exports.debug;
 var BSON = require("bson");
 var MongoClient = require("mongodb").MongoClient;

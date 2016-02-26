@@ -1,4 +1,4 @@
-'use stricts'
+"use strict";
 //todo слушать изменения коллекций, добавлять слушателей коллекций по мере обращения
 //
 var MongoClient = require("mongodb").MongoClient;
