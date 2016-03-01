@@ -3,6 +3,7 @@
 var fs = require("fs");
 var mongodb = require("mongodb");
 var restify = require("restify");
+var querystring = require("querystring");
 
 var DEBUGPREFIX = "DEBUG:";
 
@@ -55,11 +56,20 @@ let read = (req, res) => {
         });
 };
 
+server.get('/_data/:db/:collection/count?', (req, res) => {
+    var query = req.query.query ? JSON.parse(req.query.query) : {};
+    dataRest.count(req.params.db, req.params.collection, query, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
 server.get('/_data/:db/:collection/:id?', read);
 
 server.get('/_data/:db/:collection', read);
-
-server.get("/.*", restify.serveStatic({ directory: "./public", default: "index.html" }));
 
 server.post("/_data/:db/:collection", (req, res) => {
     dataRest.insert(req.params.db, req.params.collection, req.body, (err, result) => {
@@ -69,7 +79,7 @@ server.post("/_data/:db/:collection", (req, res) => {
         }
         res.json(200, result);
     });
-}); 
+});
 
 server.put("/_data/:db/:collection/:id", (req, res) => {
     dataRest.update(req.params.db, req.params.collection, req.params.id, req.body, (err, result) => {
@@ -90,7 +100,60 @@ server.del("/_data/:db/:collection/:id", (req, res) => {
         res.json(200, result._id);
     });
 }); 
- 
+
+//meta
+server.get('/_meta/databases', (req, res) => {
+    dataRest.databases((err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
+
+// let meta = (req, res) => {   
+//     var options = { db: req.params.db, collection: req.params.collection };
+//     dataRest.metadata(options, (err, result) => {
+//         res.set('content-type', 'application/json; charset=utf-8');
+//         res.json(200, result);
+//     });
+// };
+
+// server.get('/_meta/databases', meta);
+// server.get('/_meta/:db', meta);
+// server.get('/_meta/:db/:collection/count', function (req, res, next) {
+//     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+//         var collection = db.collection(req.params.collection);
+//         collection.count(function (err, count) {
+//             res.json({ count: count }, { 'content-type': 'application/json; charset=utf-8' });
+//             db.close();
+//         });
+//     })
+// });
+
+// server.get('/_meta/:db/stats', function (req, res, next) {
+//     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+//         db.stats(function (err, stats) {
+//             res.json(stats, { 'content-type': 'application/json; charset=utf-8' });
+//             db.close();
+//         })
+//     });
+// });
+
+// server.get('/_meta/:db/:collection/stats', function (req, res, next) {
+//     MongoClient.connect(util.connectionURL(req.params.db, config), function (err, db) {
+//         var collection = db.collection(req.params.collection);
+//         collection.stats(function (err, stats) {
+//             res.json(stats, { 'content-type': 'application/json; charset=utf-8' });
+//             db.close();
+//         });
+//     })
+// });
+
+server.get("/.*", restify.serveStatic({ directory: "./public", default: "index.html" }));
+
 server.listen(config.server.port, () => {
     console.log("%s listening at %s", server.name, server.url);
 });

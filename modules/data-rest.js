@@ -37,16 +37,16 @@ class DataRest extends DataStorage {
         //todo проверить существование записи
         
         let loadJoined = Object.prototype.hasOwnProperty.call(query, "join");
-        
+        var q;
         if (id) {
             if (isNaN(id) && !BSON.ObjectID.isValid(id)) {
                 throw Error("Неверный идентификатор");
             }
-            query = {
+            q = {
                 '_id': isNaN(id) ? new BSON.ObjectID(id) : +id
             };
         } else {
-            query = query.query ? JSON.parse(query.query) : {};
+            q = query.query ? JSON.parse(query.query) : {};
         }
 
         options = options || {};
@@ -59,14 +59,14 @@ class DataRest extends DataStorage {
             }
         }
 
-        let whenResult = (err, result) => {
+        let onResult = (err, result) => {
             callback(err, result);
         };
 
         if (loadJoined) {
-            this.deepRead(databaseName, collectionName, query, options, whenResult);
+            this.deepRead(databaseName, collectionName, q, options, onResult);
         } else {
-            super.find(databaseName, collectionName, query, options, whenResult);
+            super.find(databaseName, collectionName, q, options, onResult);
         }
     }
 
