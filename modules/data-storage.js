@@ -67,7 +67,7 @@ class DataStorage {
         });
     }
 
-    count(databaseName, collectionName, query, callback) {        
+    count(databaseName, collectionName, query, callback) {
         this._connect(databaseName, (db) => {
             var collection = db.collection(collectionName);
             collection.count(query, (err, result) => {
@@ -76,28 +76,53 @@ class DataStorage {
         });
     }
 
-    databases(callback) {
-        this._connect(null, (result) => {
-            result.admin().listDatabases(function (err, result) {
-                callback(err, result);           
-            });
-        });
-    }
+    // databases(callback) {
+        
+    // }
 
     //options.db - name of database - required 
     //options.collection - name of collection - not required
     metadata(options, callback) {
-        this._connect(options.db, (db) => {
-            var obj = db;
-            if (options.collection) {
-                obj = db.collection(options.collection);
-            }
-            obj.stats(function (err, result) {
-                callback(err, result);
+        if (!options.database && !options.collection) {
+            this._connect(null, (result) => {
+                result.admin().listDatabases((err, result) => {
+                    let count = result.databases.length;
+                    for (let i in result.databases) {
+                        let database = result.databases[i];
+                        this._connect(database.name, (db) => {
+                            db.stats((err, stats) => {
+                                database.stats = stats;
+                                db.listCollections().toArray((err, collections) => {
+                                    database.collections = collections;
+                                    if (!--count) {
+                                        callback(err, result);
+                                    }
+                                });
+                            });
+                        });
+                    }
+                });
             });
-        });
+        } else if (options.database && !options.collection) {
+            this._connect(options.database, (db) => {
+                let database = {};
+                db.stats((err, result) => {
+                    database.stats = result;
+                    db.listCollections().toArray((err, collections) => {
+                        database.collections = collections;
+                        callback(err, database);
+                    });
+                });
+            });
+        } else {
+            this._connect(options.database, (db) => {
+                var collection = db.collection(options.collection);
+                collection.stats((err, result) => {
+                    callback(err, result);
+                });
+            });
+        }
     }
-
 }
 
 module.exports = DataStorage;

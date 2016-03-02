@@ -1,5 +1,5 @@
 "use strict";
-// var restify = require("restify");
+
 var DataStorage = require("./data-storage");
 var BSON = require("bson");
 
