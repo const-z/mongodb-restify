@@ -1,52 +1,139 @@
+"use strict";
+
 var fs = require("fs");
 var mongodb = require("mongodb");
-var restify = module.exports.restify = require("restify");
+var restify = require("restify");
+var querystring = require("querystring");
+var log = require('intel').getLogger("server.js");
+var DataRest = require('./modules/data-rest');
+var Config = require('./modules/config');
 
-var DEBUGPREFIX = "DEBUG: ";
+////////////////////////////////////////////////
 
-var config = {
-  "db": {
-    "port": 27017,
-    "host": "localhost"
-  },
-  "server": {
-    "port": 3500,
-    "address": "0.0.0.0"
-  },
-  "flavor": "mongodb",
-  "debug": false
-};
+var config = new Config("/config.json");
 
-var debug = module.exports.debug = function (str) {
-  if (config.debug) {
-    console.log(DEBUGPREFIX + JSON.stringify(str));
-  }
-};
+log.debug("start with config:", config);
 
-try {
-  config = JSON.parse(fs.readFileSync(process.cwd() + "/config.json"));
-} catch (e) {
-  debug("No config.json file found. Fall back to default config.");
-}
-
-module.exports.config = config;
+var dataRest = new DataRest(config);
 
 var server = restify.createServer({
-//   certificate: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\public.pem'),
-//   key: fs.readFileSync('d:\\projects\\openssl-0.9.8k_X64\\bin\\private.pem'),
-  name: "mongodb-restify"
+    name: "mongodb-restify"
 });
-server.acceptable = ['application/json'];
+
+server.acceptable = ["application/json"];
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.bodyParser());
 server.use(restify.fullResponse());
 server.use(restify.queryParser());
 server.use(restify.jsonp());
 
-module.exports.server = server;
+let read = (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.read(
+        req.params.db,
+        req.params.collection,
+        req.params.id,
+        req.query,
+        req.params.options, (err, docs) => {
+            res.set("content-type", "application/json; charset=utf-8");
+            if (err) {
+                throw err;
+            }
+            if (!docs || docs.length == 0) {
+                res.json(404);
+            } else {
+                res.json(200, docs);
+            }
+        });
+};
 
-require('./modules/rest');
+server.get('/_data/:db/:collection/count?', (req, res) => {
+    log.debug(req.method, req.url);
+    var query = req.query.query ? JSON.parse(req.query.query) : {};
+    dataRest.count(req.params.db, req.params.collection, query, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
 
-server.listen(config.server.port, function () {
-  console.log("%s listening at %s", server.name, server.url);
+server.get('/_data/:db/:collection/:id?', read);
+
+server.get('/_data/:db/:collection', read);
+
+server.post("/_data/:db/:collection", (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.insert(req.params.db, req.params.collection, req.body, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
+server.put("/_data/:db/:collection/:id", (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.update(req.params.db, req.params.collection, req.params.id, req.body, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
+server.del("/_data/:db/:collection/:id", (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.remove(req.params.db, req.params.collection, req.params.id, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result._id);
+    });
+}); 
+
+//meta
+server.get('/_meta/:db/:collection', (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.metadata({ database: req.params.db, collection: req.params.collection }, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
+server.get('/_meta/:db', (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.metadata({ database: req.params.db }, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
+server.get('/_meta', (req, res) => {
+    log.debug(req.method, req.url);
+    dataRest.metadata({ database: req.params.db }, (err, result) => {
+        res.set("content-type", "application/json; charset=utf-8");
+        if (err) {
+            throw err;
+        }
+        res.json(200, result);
+    });
+});
+
+//static content
+server.get("/.*", restify.serveStatic({ directory: "./public", default: "index.html" }));
+
+//starts
+server.listen(config.server.port, () => {
+    log.info("%s listening at %s", server.name, server.url);
 });

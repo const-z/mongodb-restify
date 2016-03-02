@@ -1,12 +1,46 @@
 {
-  "db": {
-    "port": 27017,
-    "host": "localhost"
-  },
-  "server": {
-    "port": 3500,
-    "address": "0.0.0.0"
-  },
-  "flavor": "mongodb",
-  "debug": true
+	"db" : {
+		"port" : 27017,
+		"host" : "localhost"
+	},
+	"server" : {
+		"port" : 3500,
+		"address" : "0.0.0.0"
+	},
+	"flavor" : "mongodb",
+	"debug" : true,
+	"logger" : {
+		"formatters" : {
+			"simple" : {
+				"format" : "[%(levelname)s] %(message)s",
+				"colorize" : true
+			},
+			"details" : {
+				"format" : "[%(date)s] %(name)s.%(levelname)s: %(message)s",
+				"strip" : true
+			}
+		},
+		"handlers" : {
+			"terminal" : {
+				"class" : "intel/handlers/console",
+				"formatter" : "simple",
+				"level" : "DEBUG"
+			},
+			"logfile" : {
+				"class" : "intel/handlers/file",
+				"level" : "DEBUG",
+				"file" : "report.log",
+				"formatter" : "details"
+			}
+		},
+		"loggers" : {
+			"root" : {
+				"handlers" : ["terminal", "logfile"],
+				"level" : "DEBUG",
+				"handleExceptions" : true,
+				"exitOnError" : false,
+				"propagate" : false
+			}
+		}
+	}
 }
