@@ -8,7 +8,6 @@
 		"address" : "0.0.0.0"
 	},
 	"flavor" : "mongodb",
-	"debug" : true,
 	"logger" : {
 		"formatters" : {
 			"simple" : {

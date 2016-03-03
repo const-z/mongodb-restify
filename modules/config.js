@@ -7,7 +7,6 @@ class Config {
     constructor(filename) {
         this.db = { "port": 27017, "host": "localhost" };
         this.server = { "port": 3500, "address": "0.0.0.0" };
-        this.debug = false;
         this.logger = {
             formatters: {
                 'simple': {
@@ -48,19 +47,19 @@ class Config {
         // intel.INFO // intel.info() 
         // intel.WARN // intel.warn() 
         // intel.ERROR // intel.error() 
-        // intel.CRITICAL // intel.critical() 
+        // intel.CRITICAL // intel.critical()
+        var lc = JSON.parse(JSON.stringify(this.logger));
         try {
             var config = JSON.parse(fs.readFileSync(process.cwd() + filename));
             this.db = config.db;
             this.server = config.server;
-            this.debug = config.debug;
-            this.logger = config.logger;
-            require('intel').config(this.logger);
+            this.logger = config.logger;            
+            require('intel').config(lc);
         } catch (e) {
-            require('intel').config(this.logger);
+            require('intel').config(lc);
             log.warn("No config.json file found. Use default config");
-            // console.warn("No config.json file found. Fall back to default config.");
         }
+        log.debug("start with config:", "\ndb =", this.db, "\nlistner =", this.server, "\nlogger =", this.logger);
     }
 
     get db() {
