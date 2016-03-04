@@ -129,7 +129,7 @@ server.get('/_meta', (req, res) => {
 });
 
 //static content
-server.get("/.*", restify.serveStatic({ directory: "./public", default: "index.html" }));
+server.get("/.*/", restify.serveStatic({ directory: "./public", default: "index.html" }));
 
 //starts
 server.listen(config.server.port, () => {

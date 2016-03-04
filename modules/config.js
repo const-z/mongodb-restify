@@ -8,7 +8,7 @@ class Config {
         this.db = { "port": 27017, "host": "localhost" };
         this.server = { "port": 3500, "address": "0.0.0.0" };
         this.logger = {
-            formatters: {
+            "formatters": {
                 'simple': {
                     'format': '[%(levelname)s] %(message)s',
                     'colorize': true
@@ -18,7 +18,7 @@ class Config {
                     'strip': true
                 }
             },
-            handlers: {
+            "handlers": {
                 'terminal': {
                     'class': "intel/handlers/console",
                     'formatter': 'simple',
@@ -31,7 +31,7 @@ class Config {
                     'formatter': 'details'
                 }
             },
-            loggers: {
+            "loggers": {
                 "root": {
                     'handlers': ["terminal", "logfile"],
                     'level': "TRACE",

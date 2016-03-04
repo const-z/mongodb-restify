@@ -4,7 +4,7 @@ app.factory("appService", ["$http", function ($http) {
     var obj = {};
 
     obj.getDatabases = function (callback) {
-        $http.get("/_meta/databases").then(function (response) {
+        $http.get("/_meta").then(function (response) {
             callback(response.data);
         });
     };
@@ -30,22 +30,22 @@ app.factory("appService", ["$http", function ($http) {
         });
     };
 
-    obj.getCount = function (database, collection, callback) {
-        $http.get("/_meta/" + database + "/" + collection + "/count", { headers: { "content-type": "application/json" } }).then(
+    obj.getCount = function (database, collection, query, callback) {
+        $http.get("/_meta/" + database + "/" + collection + "/count?query=" + encodeURIComponent(query), { headers: { "content-type": "application/json" } }).then(
             function (response) {
                 callback(response.data);
             });
     };
 
     obj.getDatabaseStats = function (database, callback) {
-        $http.get("/_meta/" + database + "/stats", { headers: { "content-type": "application/json" } }).then(
+        $http.get("/_meta/" + database, { headers: { "content-type": "application/json" } }).then(
             function (response) {
                 callback(response.data);
             });
     };
 
     obj.getCollectionStats = function (database, collection, callback) {
-        $http.get("/_meta/" + database + "/" + collection + "/stats", { headers: { "content-type": "application/json" } }).then(
+        $http.get("/_meta/" + database + "/" + collection, { headers: { "content-type": "application/json" } }).then(
             function (response) {
                 callback(response.data);
             });
