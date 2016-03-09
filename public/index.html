@@ -45,14 +45,15 @@
 
     <div class="container-fluid">
         <div class="row">
-            <div class="col-sm-3 col-md-2 sidebar">
+            <div class="col-sm-3 col-md-2 col-xs-6 sidebar">
                 <ul class="nav nav-sidebar">
                     <li ng-repeat="d in databases | orderBy:'name'" ng-class="{'active':databaseSelected.name === d.name}">
                         <a ng-href="/data/{{d.name}}">{{d.name}}</a>
                     </li>
                 </ul>
             </div>
-            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <!--<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">-->
+            <div class="col-sm-9 col-md-10 col-xs-6 main">
                 <h1 class="page-header">{{databaseSelected.name}} > {{collectionSelected.name}}</h1>
                 <div class="row" ng-if="!collectionSelected.name">
                     <div class="list-group">
