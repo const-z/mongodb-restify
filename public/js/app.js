@@ -1,4 +1,4 @@
-var app = angular.module("DataResourceDashboard", ["appModule", "ngRoute", "ngMaterial", "md.data.table"]);
+var app = angular.module("DataResourceDashboard", ["appModule", "ngRoute"]);
 
 app.factory("appService", ["$http", function ($http) {
     var obj = {};
@@ -43,7 +43,7 @@ app.factory("appService", ["$http", function ($http) {
     return obj;
 }]);
 
-app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider, $mdThemingProvider) {
+app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider) {
     $routeProvider.when('/data/:database', {
         controller: 'appController'
     });
@@ -66,8 +66,6 @@ app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider,
     });
     $locationProvider.html5Mode(true);
     
-    $mdThemingProvider.theme('default')
-    .primaryPalette('light-blue');
     // , {
     //   'default': '400', // by default use shade 400 from the pink palette for primary intentions
     //   'hue-1': '100', // use shade 100 for the <code>md-hue-1</code> class
