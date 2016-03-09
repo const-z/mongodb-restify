@@ -1,4 +1,4 @@
-var app = angular.module("DataResourceDashboard", ["appModule", "ngRoute", "ngMaterial"]);
+var app = angular.module("DataResourceDashboard", ["appModule", "ngRoute", "ngMaterial", "md.data.table"]);
 
 app.factory("appService", ["$http", function ($http) {
     var obj = {};
@@ -9,29 +9,18 @@ app.factory("appService", ["$http", function ($http) {
         });
     };
 
-    obj.getCollections = function (database, callback) {
-        $http.get("/_meta/" + database + "/collections").then(function (response) {
-            callback(response.data);
-        });
-    };
-
     obj.getContent = function (database, collection, options, callback) {
-        $http({
-            url: "/_data/" + database + "/" + collection + options,
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            data: ""
-        }).success(function (response) {
-            callback(response);
-        }).error(function (error) {
-            callback(error, true);
-        });
+        $http.get("/_data/" + database + "/" + collection + options, { headers: { "content-type": "application/json" } }).then(
+            function (response) {
+                callback(response);
+            }, function (error) {
+                callback(error, true);
+            });
     };
 
     obj.getCount = function (database, collection, query, callback) {
-        $http.get("/_meta/" + database + "/" + collection + "/count?query=" + encodeURIComponent(query), { headers: { "content-type": "application/json" } }).then(
+        query = query ? "?query=" + encodeURIComponent(query) : "";
+        $http.get("/_meta/" + database + "/" + collection + "/count" + query, { headers: { "content-type": "application/json" } }).then(
             function (response) {
                 callback(response.data);
             });
@@ -54,7 +43,7 @@ app.factory("appService", ["$http", function ($http) {
     return obj;
 }]);
 
-app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider) {
+app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider, $mdThemingProvider) {
     $routeProvider.when('/data/:database', {
         controller: 'appController'
     });
@@ -76,30 +65,25 @@ app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider)
         requireBase: false
     });
     $locationProvider.html5Mode(true);
-
-    ///
-
-    // $provide.factory('LoggingHttpInterceptor', function ($q, $rootScope) {
-    //     $rootScope.requestsLog = [];
-    //     return {
-    //         request: function (config) {
-    //             $rootScope.requestsLog.push(config);
-    //             return config || $q.when(config);
-    //         },
-    //         requestError: function (rejection) {
-    //             return $q.reject(rejection);
-    //         },
-    //         response: function (response) {
-    //             return response || $q.when(response);
-    //         },
-    //         responseError: function (rejection) {
-    //             return $q.reject(rejection);
-    //         }
-    //     };
-    // });
-    // $httpProvider.interceptors.push('LoggingHttpInterceptor');
+    
+    $mdThemingProvider.theme('default')
+    .primaryPalette('light-blue');
+    // , {
+    //   'default': '400', // by default use shade 400 from the pink palette for primary intentions
+    //   'hue-1': '100', // use shade 100 for the <code>md-hue-1</code> class
+    //   'hue-2': '600', // use shade 600 for the <code>md-hue-2</code> class
+    //   'hue-3': 'A100' // use shade A100 for the <code>md-hue-3</code> class
+    // })
+    // // If you specify less than all of the keys, it will inherit from the
+    // // default shades
+    // .accentPalette('purple', {
+    //   'default': '200' // use shade 200 for default, and keep all other shades the same
+    // })
+    // .dark();
 });
 
 app.run(["$rootScope", "$location", "$window", "$route", "$filter", function ($rootScope, $location, $window, $route, $filter) {
-
+    $rootScope.goto = function(path) {
+        $location.path(path);
+    }
 }]);

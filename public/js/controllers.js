@@ -1,6 +1,6 @@
 var appModule = angular.module("appModule", []);
 
-appModule.controller("appController", function ($scope, $location, $route, $timeout, $log, $mdSidenav, appService) {
+appModule.controller("AppController", function ($scope, $location, $route, $timeout, $log, $mdSidenav, appService) {
 
     $scope.databases = [];
     $scope.databaseSelected = {};
@@ -10,12 +10,17 @@ appModule.controller("appController", function ($scope, $location, $route, $time
 
     $scope.pageSize = 20;
 
+    $scope.query = {
+        order: '_id',
+        limit: 10,
+        page: 1
+    };
+
     appService.getDatabases(function (data) {
         $scope.databases = data.databases;
     });
 
     $scope.$on("$locationChangeSuccess", function (event, next, current) {
-        // console.log($scope.requestsLog);
         var url = $location.search().url;
         if (url) {
             $location.search('url', null);
@@ -50,17 +55,14 @@ appModule.controller("appController", function ($scope, $location, $route, $time
         }
 
         $scope.databaseSelected.name = database;
-        appService.getDatabaseStats($scope.databaseSelected.name, function (stats) {
-            $scope.databaseSelected.stats = stats;
-            appService.getCollections($scope.databaseSelected.name, function (data) {
-                $scope.databaseSelected.collections = data;
-                console.log($scope.databaseSelected.collections);
-                for (var i in data) {
-                    loadCollectionStats(appService, $scope.databaseSelected, i, function (index, stats) {
-                        $scope.databaseSelected.collections[index].stats = stats;
-                    });
-                }
-            });
+        appService.getDatabaseStats($scope.databaseSelected.name, function (data) {
+            $scope.databaseSelected.stats = data.stats;
+            $scope.databaseSelected.collections = data.collections;
+            for (var i in data.collections) {
+                loadCollectionStats(appService, $scope.databaseSelected, i, function (index, stats) {
+                    $scope.databaseSelected.collections[index].stats = stats;
+                });
+            }
         });
     }
 
@@ -86,7 +88,9 @@ appModule.controller("appController", function ($scope, $location, $route, $time
             appService.getContent(database, collection,
                 "?limit=" + $scope.pageSize + "&skip=" + (($scope.collectionSelected.pageNum - 1) * $scope.pageSize),
                 function (data) {
-                    $scope.collectionSelected.content = processContent(data);
+                    console.log("data");
+                    $scope.collectionSelected.content = processContent(data.data);
+                    console.log($scope.collectionSelected.content);
                 });
         });
     }
@@ -95,10 +99,6 @@ appModule.controller("appController", function ($scope, $location, $route, $time
         selectCollection($scope.databaseSelected.name, $scope.collectionSelected.name);
     };
 
-    // $scope.dbTree = [];
-    // getTreeDB(appService, function (data) {
-    //     $scope.dbTree = data;
-    // });
     ////////////////////////////////////////////////////
     $scope.toggleLeft = buildDelayedToggler('left');
     $scope.toggleRight = buildToggler('right');
@@ -133,7 +133,7 @@ appModule.controller("appController", function ($scope, $location, $route, $time
             $mdSidenav(navID)
                 .toggle()
                 .then(function () {
-                    $log.debug("toggle " + navID + " is done");
+                    //$log.debug("toggle " + navID + " is done");
                 });
         }, 200);
     }
@@ -143,28 +143,15 @@ appModule.controller("appController", function ($scope, $location, $route, $time
             $mdSidenav(navID)
                 .toggle()
                 .then(function () {
-                    $log.debug("toggle " + navID + " is done");
+                    // $log.debug("toggle " + navID + " is done");
                 });
         }
     }
 
-});
-
-appModule.controller('LeftCtrl', function ($scope, $timeout, $mdSidenav, $log) {
     $scope.close = function () {
         $mdSidenav('left').close()
             .then(function () {
-                $log.debug("close LEFT is done");
-            });
-
-    };
-});
-
-appModule.controller('RightCtrl', function ($scope, $timeout, $mdSidenav, $log) {
-    $scope.close = function () {
-        $mdSidenav('right').close()
-            .then(function () {
-                $log.debug("close RIGHT is done");
+                // $log.debug("close LEFT is done");
             });
     };
 });
@@ -172,28 +159,6 @@ appModule.controller('RightCtrl', function ($scope, $timeout, $mdSidenav, $log) 
 function loadCollectionStats(appService, database, collectionIndex, callback) {
     appService.getCollectionStats(database.name, database.collections[collectionIndex].name, function (stats) {
         callback(collectionIndex, stats);
-    });
-}
-
-function getTreeDB(appService, callback) {
-    var result = [];
-    appService.getDatabases(function (data) {
-        var dbs = data.databases;
-        var count = dbs.length;
-        for (var i in dbs) {
-            getTreeCollections(appService, dbs[i].name, function (childrens, dbName) {
-                result.push({ name: dbName, childrens: childrens });
-                if (--count == 0) {
-                    callback(result);
-                }
-            });
-        }
-    });
-}
-
-function getTreeCollections(appService, dbName, callback) {
-    appService.getCollections(dbName, function (data) {
-        callback(data, dbName);
     });
 }
 
