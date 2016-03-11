@@ -80,7 +80,7 @@ class DataStorage {
         
     // }
 
-    //options.db - name of database - required 
+    //options.db - name of database - not required 
     //options.collection - name of collection - not required
     metadata(options, callback) {
         if (!options.database && !options.collection) {

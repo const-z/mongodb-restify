@@ -4,29 +4,50 @@ var fs = require("fs");
 var mongodb = require("mongodb");
 var express = require("express");
 var querystring = require("querystring");
-var log = require('intel').getLogger("server.js");
-var DataRest = require('./modules/data-rest');
-var Config = require('./modules/config');
-var bodyParser = require('body-parser');
-
+var log = require("intel").getLogger("server.js");
+var bodyParser = require("body-parser");
+var helmet = require("helmet");
+var session = require("express-session");
+var compression = require("compression");
+//
+var DataRest = require("./modules/data-rest");
+var Config = require("./modules/config");
 ////////////////////////////////////////////////
 
-var config = new Config("/config.json");
-
-var dataRest = new DataRest(config);
-
 var server = express();
-var router = express.Router();
 
+server.set("trust proxy", 1); // trust first proxy
 server.use(bodyParser.json()); // for parsing application/json
 server.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+server.use(helmet());
+server.use(session({
+    secret: "s3Cur3",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true }
+}));
+server.use(compression());
 
-router.use(function (req, res, next) {
-    log.debug('%s %s', req.method, req.url);
+//todo обрабатывать ошибку с подключением к бд
+
+// server.use(session({
+//     secret: "s3Cur3",
+//     name: "session-id",
+//     // store: sessionStore, // connect-mongo session store
+//     proxy: true,
+//     resave: true,
+//     saveUninitialized: true
+// }));
+
+var router = express.Router();
+router.use(function(req, res, next) {
+    log.debug("%s %s", req.method, req.url);
     next();
 });
+server.use("/", router);
 
-server.use('/', router);
+var config = new Config("/config.json");
+var dataRest = new DataRest(config);
 
 let read = (req, res) => {
     dataRest.read(
@@ -48,7 +69,7 @@ let read = (req, res) => {
         });
 };
 
-server.get('/_data/:db/:collection/count?', (req, res) => {
+server.get("/_data/:db/:collection/count?", (req, res) => {
     var query = req.query.query ? JSON.parse(req.query.query) : {};
     dataRest.count(req.params.db, req.params.collection, query, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
@@ -60,9 +81,9 @@ server.get('/_data/:db/:collection/count?', (req, res) => {
     });
 });
 
-server.get('/_data/:db/:collection/:id?', read);
+server.get("/_data/:db/:collection/:id?", read);
 
-server.get('/_data/:db/:collection', read);
+server.get("/_data/:db/:collection", read);
 
 server.post("/_data/:db/:collection", (req, res) => {
     dataRest.insert(req.params.db, req.params.collection, req.body, (err, result) => {
@@ -95,10 +116,10 @@ server.delete("/_data/:db/:collection/:id", (req, res) => {
         }
         res.status(200).json(result._id);
     });
-}); 
+});
 
 //meta
-server.get('/_meta/:db/:collection', (req, res) => {
+server.get("/_meta/:db/:collection", (req, res) => {
     dataRest.metadata({ database: req.params.db, collection: req.params.collection }, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
@@ -109,7 +130,7 @@ server.get('/_meta/:db/:collection', (req, res) => {
     });
 });
 
-server.get('/_meta/:db', (req, res) => {
+server.get("/_meta/:db", (req, res) => {
     dataRest.metadata({ database: req.params.db }, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
@@ -120,7 +141,7 @@ server.get('/_meta/:db', (req, res) => {
     });
 });
 
-server.get('/_meta', (req, res) => {
+server.get("/_meta", (req, res) => {
     dataRest.metadata({ database: req.params.db }, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
@@ -132,17 +153,17 @@ server.get('/_meta', (req, res) => {
 });
 
 //static content
-server.use('/libs', express.static(__dirname + '/node_modules'));
-server.use('/', express.static(__dirname + '/public'));
+server.use("/libs", express.static(__dirname + "/node_modules"));
+server.use("/", express.static(__dirname + "/public"));
 
-server.use(function (req, res, next) {
+server.use(function(req, res, next) {
     res.writeHead(301, { "Content-Type": "text/plain", "Location": "/?url=" + req.url });
     res.end();
 });
 
 //starts
 server.listen(config.server.port, () => {
-    log.info("server listening at %s", config.server.port);    
+    log.info("server listening at %s", config.server.port);
 });
 
 /*
@@ -150,8 +171,8 @@ TEST
 
 var test = function (i, max, callback) {
 	var xhr = new XMLHttpRequest();
-	xhr.open('POST', '_data/db4/collection1', true);
-	xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+	xhr.open("POST", "_data/db4/collection1", true);
+	xhr.setRequestHeader("Content-type", "application/json; charset=utf-8");
 	xhr.send("{\"field1\":\"hello\",    \"field2\":\""+(+new Date())+"\",    \"collection2_id\":{\"name\":\"collection2\"},    \"collection5_id\":{\"name\":\"collection5\",\"collection4_id\":{\"name\":\"collection4\"}},    \"collection3_id\":{\"name\":\"collection3\",\"collection6_id\":{\"name\":\"collection6\"}}}");
 	xhr.onreadystatechange = function () { // (3)
 		if (xhr.readyState != 4) {
