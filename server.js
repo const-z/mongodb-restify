@@ -28,8 +28,6 @@ server.use(session({
 }));
 server.use(compression());
 
-//todo обрабатывать ошибку с подключением к бд
-
 // server.use(session({
 //     secret: "s3Cur3",
 //     name: "session-id",

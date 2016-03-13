@@ -1,6 +1,6 @@
 var appModule = angular.module("appModule", []);
 
-appModule.controller("AppController", function ($scope, $location, $route, $timeout, $log, appService) {
+appModule.controller("AppController", function($scope, $location, $route, $timeout, $log, appService) {
 
     $scope.databases = [];
     $scope.databaseSelected = {};
@@ -10,17 +10,13 @@ appModule.controller("AppController", function ($scope, $location, $route, $time
 
     $scope.pageSize = 20;
 
-    $scope.query = {
-        order: '_id',
-        limit: 10,
-        page: 1
-    };
+    $scope.query = { order: '_id', limit: 10, page: 1 };
 
-    appService.getDatabases(function (data) {
+    appService.getDatabases(function(data) {
         $scope.databases = data.databases;
     });
 
-    $scope.$on("$locationChangeSuccess", function (event, next, current) {
+    $scope.$on("$locationChangeSuccess", function(event, next, current) {
         var url = $location.search().url;
         if (url) {
             $location.search('url', null);
@@ -39,7 +35,7 @@ appModule.controller("AppController", function ($scope, $location, $route, $time
         }
     });
 
-    $scope.gotoPage = function (page) {
+    $scope.gotoPage = function(page) {
         if (page < 1) {
             page = 1;
         } else if (page > $scope.collectionSelected.pages) {
@@ -55,11 +51,11 @@ appModule.controller("AppController", function ($scope, $location, $route, $time
         }
 
         $scope.databaseSelected.name = database;
-        appService.getDatabaseStats($scope.databaseSelected.name, function (data) {
+        appService.getDatabaseStats($scope.databaseSelected.name, function(data) {
             $scope.databaseSelected.stats = data.stats;
             $scope.databaseSelected.collections = data.collections;
             for (var i in data.collections) {
-                loadCollectionStats(appService, $scope.databaseSelected, i, function (index, stats) {
+                loadCollectionStats(appService, $scope.databaseSelected, i, function(index, stats) {
                     $scope.databaseSelected.collections[index].stats = stats;
                 });
             }
@@ -71,7 +67,7 @@ appModule.controller("AppController", function ($scope, $location, $route, $time
             $scope.collectionSelected = {};
             return;
         }
-        appService.getCollectionStats(database, collection, function (stats) {
+        appService.getCollectionStats(database, collection, function(stats) {
             $scope.collectionSelected.stats = stats;
             $scope.collectionSelected.pages = Math.ceil(stats.count / $scope.pageSize);
             $scope.collectionSelected.name = collection;
@@ -87,15 +83,13 @@ appModule.controller("AppController", function ($scope, $location, $route, $time
 
             appService.getContent(database, collection,
                 "?limit=" + $scope.pageSize + "&skip=" + (($scope.collectionSelected.pageNum - 1) * $scope.pageSize),
-                function (data) {
-                    console.log("data");
+                function(data) {
                     $scope.collectionSelected.content = processContent(data.data);
-                    console.log($scope.collectionSelected.content);
                 });
         });
     }
 
-    $scope.refreshContent = function () {
+    $scope.refreshContent = function() {
         selectCollection($scope.databaseSelected.name, $scope.collectionSelected.name);
     };
 
@@ -157,7 +151,7 @@ appModule.controller("AppController", function ($scope, $location, $route, $time
 });
 
 function loadCollectionStats(appService, database, collectionIndex, callback) {
-    appService.getCollectionStats(database.name, database.collections[collectionIndex].name, function (stats) {
+    appService.getCollectionStats(database.name, database.collections[collectionIndex].name, function(stats) {
         callback(collectionIndex, stats);
     });
 }

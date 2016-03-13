@@ -1,41 +1,41 @@
 var app = angular.module("DataResourceDashboard", ["appModule", "ngRoute"]);
 
-app.factory("appService", ["$http", function ($http) {
+app.factory("appService", ["$http", function($http) {
     var obj = {};
 
-    obj.getDatabases = function (callback) {
-        $http.get("/_meta").then(function (response) {
+    obj.getDatabases = function(callback) {
+        $http.get("/_meta").then(function(response) {
             callback(response.data);
         });
     };
 
-    obj.getContent = function (database, collection, options, callback) {
+    obj.getContent = function(database, collection, options, callback) {
         $http.get("/_data/" + database + "/" + collection + options, { headers: { "content-type": "application/json" } }).then(
-            function (response) {
+            function(response) {
                 callback(response);
-            }, function (error) {
+            }, function(error) {
                 callback(error, true);
             });
     };
 
-    obj.getCount = function (database, collection, query, callback) {
+    obj.getCount = function(database, collection, query, callback) {
         query = query ? "?query=" + encodeURIComponent(query) : "";
         $http.get("/_meta/" + database + "/" + collection + "/count" + query, { headers: { "content-type": "application/json" } }).then(
-            function (response) {
+            function(response) {
                 callback(response.data);
             });
     };
 
-    obj.getDatabaseStats = function (database, callback) {
+    obj.getDatabaseStats = function(database, callback) {
         $http.get("/_meta/" + database, { headers: { "content-type": "application/json" } }).then(
-            function (response) {
+            function(response) {
                 callback(response.data);
             });
     };
 
-    obj.getCollectionStats = function (database, collection, callback) {
+    obj.getCollectionStats = function(database, collection, callback) {
         $http.get("/_meta/" + database + "/" + collection, { headers: { "content-type": "application/json" } }).then(
-            function (response) {
+            function(response) {
                 callback(response.data);
             });
     };
@@ -43,7 +43,7 @@ app.factory("appService", ["$http", function ($http) {
     return obj;
 }]);
 
-app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider) {
+app.config(function($routeProvider, $locationProvider, $provide, $httpProvider) {
     $routeProvider.when('/data/:database', {
         controller: 'appController'
     });
@@ -65,22 +65,35 @@ app.config(function ($routeProvider, $locationProvider, $provide, $httpProvider)
         requireBase: false
     });
     $locationProvider.html5Mode(true);
-    
-    // , {
-    //   'default': '400', // by default use shade 400 from the pink palette for primary intentions
-    //   'hue-1': '100', // use shade 100 for the <code>md-hue-1</code> class
-    //   'hue-2': '600', // use shade 600 for the <code>md-hue-2</code> class
-    //   'hue-3': 'A100' // use shade A100 for the <code>md-hue-3</code> class
-    // })
-    // // If you specify less than all of the keys, it will inherit from the
-    // // default shades
-    // .accentPalette('purple', {
-    //   'default': '200' // use shade 200 for default, and keep all other shades the same
-    // })
-    // .dark();
+
+    $provide.factory('LoggingHttpInterceptor', function($q, $rootScope) {
+        $rootScope.requestsLog = [];
+        return {
+            request: function(config) {
+                var r = {};
+                r.headers = config.headers;
+                r.url = config.url;
+                r.method = config.method;
+                
+                $rootScope.requestsLog.push(r);
+                console.log(config);
+                return config || $q.when(config);
+            },
+            requestError: function(rejection) {
+                return $q.reject(rejection);
+            },
+            response: function(response) {
+                return response || $q.when(response);
+            },
+            responseError: function(rejection) {
+                return $q.reject(rejection);
+            }
+        };
+    });
+    $httpProvider.interceptors.push("LoggingHttpInterceptor");
 });
 
-app.run(["$rootScope", "$location", "$window", "$route", "$filter", function ($rootScope, $location, $window, $route, $filter) {
+app.run(["$rootScope", "$location", "$window", "$route", "$filter", function($rootScope, $location, $window, $route, $filter) {
     $rootScope.goto = function(path) {
         $location.path(path);
     }
