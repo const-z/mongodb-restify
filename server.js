@@ -163,33 +163,3 @@ server.use(function(req, res, next) {
 server.listen(config.server.port, () => {
     log.info("server listening at %s", config.server.port);
 });
-
-/*
-TEST
-
-var test = function (i, max, callback) {
-	var xhr = new XMLHttpRequest();
-	xhr.open("POST", "_data/db4/collection1", true);
-	xhr.setRequestHeader("Content-type", "application/json; charset=utf-8");
-	xhr.send("{\"field1\":\"hello\",    \"field2\":\""+(+new Date())+"\",    \"collection2_id\":{\"name\":\"collection2\"},    \"collection5_id\":{\"name\":\"collection5\",\"collection4_id\":{\"name\":\"collection4\"}},    \"collection3_id\":{\"name\":\"collection3\",\"collection6_id\":{\"name\":\"collection6\"}}}");
-	xhr.onreadystatechange = function () { // (3)
-		if (xhr.readyState != 4) {
-			return;
-		}
-		if (i === max) {
-			console.log("end", + (new Date()));
-			return;
-		}
-		callback(i, max);
-	}
-}
-
-var d = new Date();
-console.log("start",+d);
-for (var i=0; i<1000000; i++) {
-test(i, 999999, function(){
-
-});
-}
-
-*/
