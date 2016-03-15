@@ -1,6 +1,6 @@
 {
-  "name": "mongodb-rest",
-  "description": "MongoDB REST",
+  "name": "data-resource",
+  "description": "data-resource",
   "version": "0.0.1",
   "author": "Const <const.dev@yandex.ru>",
   "main": "server.js",
@@ -29,7 +29,6 @@
     "angular-route": "^1.5.0",
     "body-parser": "^1.15.0",
     "bootstrap": "^3.3.6",
-    "co": "^4.6.0",
     "compression": "^1.6.1",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
