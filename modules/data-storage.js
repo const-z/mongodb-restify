@@ -2,6 +2,27 @@
 
 var mongoClient = require("mongodb").MongoClient;
 
+// function execute(generator, yieldValue) {
+
+//     let next = generator.next(yieldValue);
+//     console.log(next);
+
+//     if (!next.done) {
+//         if (next.value instanceof Promise) {
+//             console.log("promise");
+//             next.value.then(
+//                 result => execute(generator, result),
+//                 err => generator.throw(err)
+//             );
+//         } else {
+//             execute(generator, next);
+//         }
+//     } else {
+//         console.log(next.value);
+//         return next.value;
+//     }
+// }
+
 class DataStorage {
 
     constructor(config) {
@@ -26,9 +47,9 @@ class DataStorage {
                     return;
                 }
                 this._db_connections[databaseName] = result;
-                let on = (err) => {                    
+                let on = (err) => {
                     result.removeListener('close', on);
-                    delete this._db_connections[databaseName];                    
+                    delete this._db_connections[databaseName];
                 };
                 result.on("close", on);
                 callback(null, result);
