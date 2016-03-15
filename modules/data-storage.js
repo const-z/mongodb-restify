@@ -2,27 +2,6 @@
 
 var mongoClient = require("mongodb").MongoClient;
 
-// function execute(generator, yieldValue) {
-
-//     let next = generator.next(yieldValue);
-//     console.log(next);
-
-//     if (!next.done) {
-//         if (next.value instanceof Promise) {
-//             console.log("promise");
-//             next.value.then(
-//                 result => execute(generator, result),
-//                 err => generator.throw(err)
-//             );
-//         } else {
-//             execute(generator, next);
-//         }
-//     } else {
-//         console.log(next.value);
-//         return next.value;
-//     }
-// }
-
 class DataStorage {
 
     constructor(config) {
@@ -120,7 +99,7 @@ class DataStorage {
         });
     }
 
-    //options.db - name of database - not required 
+    //options.db - name of database - not required
     //options.collection - name of collection - not required
     metadata(options, callback) {
         if (!options.database && !options.collection) {

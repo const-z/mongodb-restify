@@ -10,14 +10,13 @@ class DataRest extends DataStorage {
     }
 
     insert(databaseName, collectionName, data, callback) {
-        data = Array.isArray(data) ? data[0] : data;        
+        data = Array.isArray(data) ? data[0] : data;
         this.deepSave(databaseName, collectionName, data, (err, result) => {
             callback(err, result);
         });
     }
 
     update(databaseName, collectionName, id, data, callback) {
-        //todo проверить существование записи
         data = Array.isArray(data) ? data[0] : data;
         data._id = isNaN(id) ? new BSON.ObjectID(id) : +id
         this.deepSave(databaseName, collectionName, data, (err, result) => {
@@ -26,7 +25,6 @@ class DataRest extends DataStorage {
     }
 
     remove(databaseName, collectionName, id, callback) {
-        //todo проверить существование записи
         id = isNaN(id) ? new BSON.ObjectID(id) : +id;
         super.remove(databaseName, collectionName, id, (err, result) => {
             callback(err, result);
@@ -34,8 +32,6 @@ class DataRest extends DataStorage {
     }
 
     read(databaseName, collectionName, id, query, options, callback) {
-        //todo проверить существование записи
-        
         let loadJoined = Object.prototype.hasOwnProperty.call(query, "join");
         var q;
         if (id) {
@@ -51,7 +47,7 @@ class DataRest extends DataStorage {
 
         options = options || {};
 
-        var optionsKey = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];        
+        var optionsKey = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];
 
         for (var v in query) {
             if (optionsKey.indexOf(v) !== -1) {
