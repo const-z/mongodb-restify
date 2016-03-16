@@ -2,22 +2,6 @@
 
 var mongoClient = require("mongodb").MongoClient;
 
-function execute(generator, yieldValue) {
-    let next = generator.next(yieldValue);
-    if (!next.done) {
-        if (next.value instanceof Promise) {
-            next.value.then(
-                result => execute(generator, result),
-                err => generator.throw(err)
-            );
-        } else {
-            execute(generator, next);
-        }
-    } else {
-        return next.value;
-    }
-}
-
 class DataStorage {
 
     constructor(config) {
