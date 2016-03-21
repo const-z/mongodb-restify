@@ -10,7 +10,7 @@ var helmet = require("helmet");
 var session = require("express-session");
 var compression = require("compression");
 //
-var DataRest = require("./modules/data-rest");
+var DataStorageFacade = require("./modules/data-storage-facade");
 var Config = require("./modules/config");
 ////////////////////////////////////////////////
 
@@ -45,10 +45,10 @@ router.use(function(req, res, next) {
 server.use("/", router);
 
 var config = new Config("/config.json");
-var dataRest = new DataRest(config);
+var dataStorageFacade = new DataStorageFacade(config);
 
 let read = (req, res) => {
-    dataRest.read(
+    dataStorageFacade.read(
         req.params.db,
         req.params.collection,
         req.params.id,
@@ -69,7 +69,7 @@ let read = (req, res) => {
 
 server.get("/_data/:db/:collection/count?", (req, res) => {
     var query = req.query.query ? JSON.parse(req.query.query) : {};
-    dataRest.count(req.params.db, req.params.collection, query, (err, result) => {
+    dataStorageFacade.count(req.params.db, req.params.collection, query, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);
@@ -84,7 +84,7 @@ server.get("/_data/:db/:collection/:id?", read);
 server.get("/_data/:db/:collection", read);
 
 server.post("/_data/:db/:collection", (req, res) => {
-    dataRest.insert(req.params.db, req.params.collection, req.body, (err, result) => {
+    dataStorageFacade.insert(req.params.db, req.params.collection, req.body, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);
@@ -95,7 +95,7 @@ server.post("/_data/:db/:collection", (req, res) => {
 });
 
 server.put("/_data/:db/:collection/:id", (req, res) => {
-    dataRest.update(req.params.db, req.params.collection, req.params.id, req.body, (err, result) => {
+    dataStorageFacade.update(req.params.db, req.params.collection, req.params.id, req.body, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);
@@ -106,7 +106,7 @@ server.put("/_data/:db/:collection/:id", (req, res) => {
 });
 
 server.delete("/_data/:db/:collection/:id", (req, res) => {
-    dataRest.remove(req.params.db, req.params.collection, req.params.id, (err, result) => {
+    dataStorageFacade.remove(req.params.db, req.params.collection, req.params.id, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);
@@ -118,7 +118,7 @@ server.delete("/_data/:db/:collection/:id", (req, res) => {
 
 //meta
 server.get("/_meta/:db/:collection", (req, res) => {
-    dataRest.metadata({ database: req.params.db, collection: req.params.collection }, (err, result) => {
+    dataStorageFacade.metadata({ database: req.params.db, collection: req.params.collection }, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);
@@ -129,7 +129,7 @@ server.get("/_meta/:db/:collection", (req, res) => {
 });
 
 server.get("/_meta/:db", (req, res) => {
-    dataRest.metadata({ database: req.params.db }, (err, result) => {
+    dataStorageFacade.metadata({ database: req.params.db }, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);
@@ -140,7 +140,7 @@ server.get("/_meta/:db", (req, res) => {
 });
 
 server.get("/_meta", (req, res) => {
-    dataRest.metadata({ database: req.params.db }, (err, result) => {
+    dataStorageFacade.metadata({ database: req.params.db }, (err, result) => {
         res.set("content-type", "application/json; charset=utf-8");
         if (err) {
             res.status(500).json(err);

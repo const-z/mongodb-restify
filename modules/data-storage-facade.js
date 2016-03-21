@@ -3,7 +3,7 @@
 var DataStorage = require("./data-storage");
 var BSON = require("bson");
 
-class DataRest extends DataStorage {
+class DataStorageFacade extends DataStorage {
 
     constructor(config) {
         super(config);
@@ -152,4 +152,4 @@ class DataRest extends DataStorage {
     }
 }
 
-module.exports = DataRest;
+module.exports = DataStorageFacade;
