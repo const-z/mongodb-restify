@@ -159,7 +159,19 @@ server.use(function(req, res, next) {
     res.end();
 });
 
+
+var port = config.server.port;
+if (process.argv) {
+    for (var i in process.argv) {
+        if (process.argv[i].indexOf("--port=") !== -1) {
+            port = process.argv[i].trim().split("--port=")[1];
+            log.debug("Port from --port =", port);
+            break;
+        }
+    }
+}
+
 //starts
-server.listen(config.server.port, () => {
-    log.info("server listening at %s", config.server.port);
+server.listen(port, () => {
+    log.info("server listening at", port);
 });

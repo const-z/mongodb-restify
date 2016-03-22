@@ -41,19 +41,19 @@ class Config {
                 }
             }
         };
-        // intel.TRACE // intel.trace() 
-        // intel.VERBOSE // intel.verbose() 
-        // intel.DEBUG // intel.debug() 
-        // intel.INFO // intel.info() 
-        // intel.WARN // intel.warn() 
-        // intel.ERROR // intel.error() 
+        // intel.TRACE // intel.trace()
+        // intel.VERBOSE // intel.verbose()
+        // intel.DEBUG // intel.debug()
+        // intel.INFO // intel.info()
+        // intel.WARN // intel.warn()
+        // intel.ERROR // intel.error()
         // intel.CRITICAL // intel.critical()
         var lc = JSON.parse(JSON.stringify(this.logger));
         try {
             var config = JSON.parse(fs.readFileSync(process.cwd() + filename));
             this.db = config.db;
             this.server = config.server;
-            this.logger = config.logger;            
+            this.logger = config.logger;
             require('intel').config(lc);
         } catch (e) {
             require('intel').config(lc);
