@@ -14,19 +14,19 @@ function createChild(port) {
     };
 
     function onExit() {
-        console.error("server.js has exited");
+        console.error("Exit", port);
     }
 
     function onWatchRestart(info) {
-        console.error("Restaring.", info.file, info.stat);
+        console.error("Restaring", port + ".", info.file, info.stat);
     }
 
     function onRestart() {
-        console.error("Restarting script for " + child.times + " time");
+        console.error("Restarting script for", child.times, "time");
     }
 
     function onStart(process) {
-        console.log("Start", process.uid);
+        console.log("Start", port);
     }
 
     var child = new (forever.Monitor)("server.js", childConfig);
@@ -37,8 +37,20 @@ function createChild(port) {
     return child;
 }
 
-var child = createChild(3500);
-child.start();
 
-var child2 = createChild(3600);
-child2.start();
+var childs = [];
+childs.push(createChild(3500));
+childs.push(createChild(3600));
+childs.forEach(function(child) {
+    child.start();
+});
+
+process.on('SIGINT', function() {
+    console.log("\nShutting down \'node forever\' from SIGINT (Ctrl-C)");
+    // some other closing procedures go here
+    childs.forEach(function(child) {
+        child.stop();
+    });
+    //
+    process.exit();
+});

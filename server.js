@@ -9,6 +9,7 @@ var bodyParser = require("body-parser");
 var helmet = require("helmet");
 var session = require("express-session");
 var compression = require("compression");
+var path = require("path");
 //
 var DataStorageFacade = require("./modules/data-storage-facade");
 var Config = require("./modules/config");
@@ -27,15 +28,6 @@ server.use(session({
     cookie: { secure: true }
 }));
 server.use(compression());
-
-// server.use(session({
-//     secret: "s3Cur3",
-//     name: "session-id",
-//     // store: sessionStore, // connect-mongo session store
-//     proxy: true,
-//     resave: true,
-//     saveUninitialized: true
-// }));
 
 var router = express.Router();
 router.use(function(req, res, next) {
@@ -159,19 +151,7 @@ server.use(function(req, res, next) {
     res.end();
 });
 
-
-var port = config.server.port;
-if (process.argv) {
-    for (var i in process.argv) {
-        if (process.argv[i].indexOf("--port=") !== -1) {
-            port = process.argv[i].trim().split("--port=")[1];
-            log.debug("Port from --port =", port);
-            break;
-        }
-    }
-}
-
 //starts
-server.listen(port, () => {
-    log.info("server listening at", port);
+server.listen(config.server.port, () => {
+    log.info("server listening at", config.server.port);
 });
