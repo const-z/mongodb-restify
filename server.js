@@ -9,7 +9,6 @@ var bodyParser = require("body-parser");
 var helmet = require("helmet");
 var session = require("express-session");
 var compression = require("compression");
-var path = require("path");
 //
 var DataStorageFacade = require("./modules/data-storage-facade");
 var Config = require("./modules/config");
