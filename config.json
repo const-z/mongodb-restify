@@ -28,7 +28,7 @@
 			"logfile" : {
 				"class" : "intel/handlers/file",
 				"level" : "DEBUG",
-				"file" : "report.log",
+				"file" : "log/report.log",
 				"formatter" : "details"
 			}
 		},

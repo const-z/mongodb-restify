@@ -39,11 +39,11 @@ function createChild(port) {
 
 
 var childs = [];
-childs.push(createChild(3500));
-childs.push(createChild(3600));
-childs.forEach(function(child) {
+for (var i = 0; i < 2; i++) {
+    var child = createChild(3500 + i);
+    childs.push(child);
     child.start();
-});
+}
 
 process.on('SIGINT', function() {
     console.log("\nShutting down \'node forever\' from SIGINT (Ctrl-C)");

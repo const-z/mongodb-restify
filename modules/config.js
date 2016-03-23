@@ -2,7 +2,6 @@
 
 var fs = require("fs");
 var path = require("path");
-// var intel = require('intel');
 var log = require('intel').getLogger("config.js");
 
 class Config {
@@ -57,12 +56,8 @@ class Config {
             this.server = config.server;
             this.server.port = port ? port : this.server.port;
             this.logger = config.logger;
-            this.logger.handlers.logfile.file = path.join(process.cwd(), "log", (port ? port + "_" : "") + this.logger.handlers.logfile.file);
             require('intel').config(this.logger);
         } catch (e) {
-            if (port) {
-                this.logger.handlers.logfile.file = path.join(process.cwd(), "log", (port ? port + "_" : "") + this.logger.handlers.logfile.file);
-            }
             require('intel').config(this.logger);
             log.error("Error when process", filename, ". Use default config.\n", e);
         }
