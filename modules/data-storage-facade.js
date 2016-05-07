@@ -70,8 +70,9 @@ class DataStorageFacade extends DataStorage {
         let getIdsList = (obj) => {
             let result = [];
             for (let field in obj) {
-                if (field !== "_id" && field.endsWith("_id")
-                    && (!isNaN(obj[field]) || (obj[field] instanceof BSON.ObjectID))) {
+                if (field !== "_id" &&
+                    field.endsWith("_id") &&
+                    (!isNaN(obj[field]) || (obj[field] instanceof BSON.ObjectID))) {
                     result.push(field);
                 }
             }
@@ -118,7 +119,9 @@ class DataStorageFacade extends DataStorage {
         let getIdsList = (obj) => {
             let result = [];
             for (let field in obj) {
-                if (field !== "_id" && field.endsWith("_id") && typeof obj[field] === "object") {
+                if (field !== "_id" &&
+                    field.endsWith("_id") &&
+                    typeof obj[field] === "object") {
                     result.push(field);
                 }
             }
