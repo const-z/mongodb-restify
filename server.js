@@ -1,5 +1,7 @@
 "use strict";
 
+//todo переписать callback на promise
+
 var fs = require("fs");
 var mongodb = require("mongodb");
 var express = require("express");
