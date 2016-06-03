@@ -15,41 +15,47 @@ class DataStorageFacade extends DataStorage {
             callback(err, result);
         });
     }
-
-    update(databaseName, collectionName, id, data, callback) {
+    
+    update(databaseName, collectionName, id, data) {
         data = Array.isArray(data) ? data[0] : data;
         data._id = isNaN(id) ? new BSON.ObjectID(id) : +id;
 
-		this.count(databaseName, collectionName, { "_id": data._id }, (err, result) => {
-			if (err) {
-				callback(err);
-				return;
-			}
-			if (result === 0) {
-				callback(err, null);
-				return;
-			}
-			this.deepSave(databaseName, collectionName, data, (err, result) => {
-				callback(err, result);
-			});
-		});
+        return new Promise((resolve, reject) => {
+            this.count(databaseName, collectionName, { "_id": data._id })
+                .then(result => {
+                    if (result === 0) {
+                        resolve(null);
+                        return;
+                    }
+                    this.deepSave(databaseName, collectionName, data, (err, result) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve(result);
+                    });
+                })
+                .catch(err => {
+                    reject(err);
+                });
+        });
     }
 
     remove(databaseName, collectionName, id, callback) {
         id = isNaN(id) ? new BSON.ObjectID(id) : +id;
-		this.count(databaseName, collectionName, { "_id": id }, (err, result) => {
-			if (err) {
-				callback(err);
-				return;
-			}
-			if (result === 0) {
-				callback(err, null);
-				return;
-			}
-			super.remove(databaseName, collectionName, id, (err, result) => {
-				callback(err, result);
-			});
-		});
+        this.count(databaseName, collectionName, { "_id": id }, (err, result) => {
+            if (err) {
+                callback(err);
+                return;
+            }
+            if (result === 0) {
+                callback(err, null);
+                return;
+            }
+            super.remove(databaseName, collectionName, id, (err, result) => {
+                callback(err, result);
+            });
+        });
     }
 
     read(databaseName, collectionName, id, query, options, callback) {

@@ -13,29 +13,54 @@ class DataStorage {
 		this._db_connections = {};
 	}
 
-	_connect(databaseName, callback) {
-		var url = this.connectionUrl + databaseName;
-		if (!databaseName) {
-			databaseName = "__server__";
-			url = this.connectionUrl;
-		}
-		if (!this._db_connections[databaseName]) {
-			mongoClient.connect(url, (err, result) => {
-				if (err) {
-					callback(err);
-					return;
-				}
-				this._db_connections[databaseName] = result;
-				let on = (err) => {
-					result.removeListener("close", on);
-					delete this._db_connections[databaseName];
-				};
-				result.on("close", on);
-				callback(null, result);
-			});
-		} else {
-			callback(null, this._db_connections[databaseName]);
-		}
+	// _connect(databaseName, callback) {
+	// 	var url = this.connectionUrl + databaseName;
+	// 	if (!databaseName) {
+	// 		databaseName = "__server__";
+	// 		url = this.connectionUrl;
+	// 	}
+	// 	if (!this._db_connections[databaseName]) {
+	// 		mongoClient.connect(url, (err, result) => {
+	// 			if (err) {
+	// 				callback(err);
+	// 				return;
+	// 			}
+	// 			this._db_connections[databaseName] = result;
+	// 			let on = (err) => {
+	// 				result.removeListener("close", on);
+	// 				delete this._db_connections[databaseName];
+	// 			};
+	// 			result.on("close", on);
+	// 			callback(null, result);
+	// 		});
+	// 	} else {
+	// 		callback(null, this._db_connections[databaseName]);
+	// 	}
+	// }
+	_connect(databaseName) {
+		return new Promise((resolve, reject) => {
+			var url = this.connectionUrl + databaseName;
+			if (!databaseName) {
+				databaseName = "__server__";
+				url = this.connectionUrl;
+			}
+			if (!this._db_connections[databaseName]) {
+				mongoClient.connect(url).then(result => {
+					this._db_connections[databaseName] = result;
+					let on = (err) => {
+						result.removeListener("close", on);
+						delete this._db_connections[databaseName];
+					};
+					result.on("close", on);
+					resolve(result);
+				})
+					.cath(err => {
+						reject(err);
+					});
+			} else {
+				resolve(this._db_connections[databaseName]);
+			}
+		});
 	}
 
 	find(databaseName, collectionName, query, options, callback) {
@@ -86,21 +111,23 @@ class DataStorage {
 		});
 	}
 
-	count(databaseName, collectionName, query, callback) {
-		this._connect(databaseName, (err, db) => {
-			if (err) {
-				callback(err);
-				return;
-			}
-			var collection = db.collection(collectionName);
-			collection.count(query, (err, result) => {
-				callback(err, result);
+	count(databaseName, collectionName, query) {
+		return new Promise((resolve, reject) => {
+			this._connect(databaseName).then(result => {
+				var collection = db.collection(collectionName);
+				collection.count(query).then(result => {
+					resolve(result);
+				}).catch(err => {
+					reject(err);
+				});
+			}).catch(err => {
+				reject(err);
 			});
 		});
 	}
 
-	//options.db - name of database - not required
-	//options.collection - name of collection - not required
+	// options.db - name of database - not required. if present then return database metadata
+	// options.collection - name of collection - not required. if present then options.db become required, return metadata
 	metadata(options, callback) {
 		if (!options.database && !options.collection) {
 			this._connect(null, (err, result) => {
