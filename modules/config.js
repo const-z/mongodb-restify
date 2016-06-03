@@ -1,6 +1,7 @@
 "use strict";
 
 var fs = require("fs");
+var path = require("path");
 var log = require('intel').getLogger("config.js");
 
 class Config {
@@ -41,23 +42,24 @@ class Config {
                 }
             }
         };
-        // intel.TRACE // intel.trace() 
-        // intel.VERBOSE // intel.verbose() 
-        // intel.DEBUG // intel.debug() 
-        // intel.INFO // intel.info() 
-        // intel.WARN // intel.warn() 
-        // intel.ERROR // intel.error() 
+        // intel.TRACE // intel.trace()
+        // intel.VERBOSE // intel.verbose()
+        // intel.DEBUG // intel.debug()
+        // intel.INFO // intel.info()
+        // intel.WARN // intel.warn()
+        // intel.ERROR // intel.error()
         // intel.CRITICAL // intel.critical()
-        var lc = JSON.parse(JSON.stringify(this.logger));
+        let port = this._argPort();
         try {
-            var config = JSON.parse(fs.readFileSync(process.cwd() + filename));
+            var config = JSON.parse(fs.readFileSync(path.join(process.cwd(), filename)));
             this.db = config.db;
             this.server = config.server;
-            this.logger = config.logger;            
-            require('intel').config(lc);
+            this.server.port = port ? port : this.server.port;
+            this.logger = config.logger;
+            require('intel').config(this.logger);
         } catch (e) {
-            require('intel').config(lc);
-            log.warn("No config.json file found. Use default config");
+            require('intel').config(this.logger);
+            log.error("Error when process", filename, ". Use default config.\n", e);
         }
         log.debug("start with config:", "\ndb =", this.db, "\nlistner =", this.server, "\nlogger =", this.logger);
     }
@@ -78,20 +80,24 @@ class Config {
         this._server = value;
     }
 
-    get debug() {
-        return this._debug;
-    }
-
-    set debug(value) {
-        this._debug = value;
-    }
-
     get logger() {
         return this._logger;
     }
 
     set logger(value) {
         this._logger = value;
+    }
+
+    _argPort() {
+        var port = null;
+        if (process.argv) {
+            for (var i in process.argv) {
+                if (process.argv[i].indexOf("--port=") !== -1) {
+                    port = process.argv[i].trim().split("--port=")[1];
+                    return port;
+                }
+            }
+        }
     }
 }
 

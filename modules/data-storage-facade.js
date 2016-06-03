@@ -3,39 +3,56 @@
 var DataStorage = require("./data-storage");
 var BSON = require("bson");
 
-class DataRest extends DataStorage {
+class DataStorageFacade extends DataStorage {
 
     constructor(config) {
         super(config);
     }
 
     insert(databaseName, collectionName, data, callback) {
-        data = Array.isArray(data) ? data[0] : data;        
+        data = Array.isArray(data) ? data[0] : data;
         this.deepSave(databaseName, collectionName, data, (err, result) => {
             callback(err, result);
         });
     }
 
     update(databaseName, collectionName, id, data, callback) {
-        //todo проверить существование записи
         data = Array.isArray(data) ? data[0] : data;
-        data._id = isNaN(id) ? new BSON.ObjectID(id) : +id
-        this.deepSave(databaseName, collectionName, data, (err, result) => {
-            callback(err, result);
-        });
+        data._id = isNaN(id) ? new BSON.ObjectID(id) : +id;
+
+		this.count(databaseName, collectionName, { "_id": data._id }, (err, result) => {
+			if (err) {
+				callback(err);
+				return;
+			}
+			if (result === 0) {
+				callback(err, null);
+				return;
+			}
+			this.deepSave(databaseName, collectionName, data, (err, result) => {
+				callback(err, result);
+			});
+		});
     }
 
     remove(databaseName, collectionName, id, callback) {
-        //todo проверить существование записи
         id = isNaN(id) ? new BSON.ObjectID(id) : +id;
-        super.remove(databaseName, collectionName, id, (err, result) => {
-            callback(err, result);
-        });
+		this.count(databaseName, collectionName, { "_id": id }, (err, result) => {
+			if (err) {
+				callback(err);
+				return;
+			}
+			if (result === 0) {
+				callback(err, null);
+				return;
+			}
+			super.remove(databaseName, collectionName, id, (err, result) => {
+				callback(err, result);
+			});
+		});
     }
 
     read(databaseName, collectionName, id, query, options, callback) {
-        //todo проверить существование записи
-        
         let loadJoined = Object.prototype.hasOwnProperty.call(query, "join");
         var q;
         if (id) {
@@ -43,7 +60,7 @@ class DataRest extends DataStorage {
                 throw Error("Неверный идентификатор");
             }
             q = {
-                '_id': isNaN(id) ? new BSON.ObjectID(id) : +id
+                "_id": isNaN(id) ? new BSON.ObjectID(id) : +id
             };
         } else {
             q = query.query ? JSON.parse(query.query) : {};
@@ -51,7 +68,7 @@ class DataRest extends DataStorage {
 
         options = options || {};
 
-        var optionsKey = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];        
+        var optionsKey = ["limit", "sort", "fields", "skip", "hint", "explain", "snapshot", "timeout"];
 
         for (var v in query) {
             if (optionsKey.indexOf(v) !== -1) {
@@ -74,13 +91,14 @@ class DataRest extends DataStorage {
         let getIdsList = (obj) => {
             let result = [];
             for (let field in obj) {
-                if (field !== "_id" && field.endsWith("_id")
-                    && (!isNaN(obj[field]) || (obj[field] instanceof BSON.ObjectID))) {
+                if (field !== "_id" &&
+                    field.endsWith("_id") &&
+                    (!isNaN(obj[field]) || (obj[field] instanceof BSON.ObjectID))) {
                     result.push(field);
                 }
             }
             return result;
-        }
+        };
 
         let proc = (db, collection, query, options, callback) => {
             super.find(db, collection, query, options, (err, docs) => {
@@ -111,7 +129,7 @@ class DataRest extends DataStorage {
                     callback(err, docs);
                 }
             });
-        }
+        };
 
         proc(databaseName, collectionName, query, options, (err, result) => {
             callback(err, result);
@@ -122,12 +140,14 @@ class DataRest extends DataStorage {
         let getIdsList = (obj) => {
             let result = [];
             for (let field in obj) {
-                if (field !== "_id" && field.endsWith("_id") && typeof obj[field] === "object") {
+                if (field !== "_id" &&
+                    field.endsWith("_id") &&
+                    typeof obj[field] === "object") {
                     result.push(field);
                 }
             }
             return result;
-        }
+        };
 
         let proc = (collectionName, document, callback) => {
             var err = null;
@@ -156,4 +176,4 @@ class DataRest extends DataStorage {
     }
 }
 
-module.exports = DataRest;
+module.exports = DataStorageFacade;

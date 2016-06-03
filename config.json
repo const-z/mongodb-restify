@@ -23,12 +23,12 @@
 			"terminal" : {
 				"class" : "intel/handlers/console",
 				"formatter" : "simple",
-				"level" : "DEBUG"
+				"level" : "INFO"
 			},
 			"logfile" : {
 				"class" : "intel/handlers/file",
 				"level" : "DEBUG",
-				"file" : "report.log",
+				"file" : "log/report.log",
 				"formatter" : "details"
 			}
 		},

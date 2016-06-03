@@ -1,6 +1,6 @@
 {
-  "name": "mongodb-rest",
-  "description": "MongoDB REST",
+  "name": "data-resource",
+  "description": "data-resource",
   "version": "0.0.1",
   "author": "Const <const.dev@yandex.ru>",
   "main": "server.js",
@@ -25,12 +25,21 @@
     "angular-aria": "^1.5.0",
     "angular-material": "^1.0.6",
     "angular-material-data-table": "^0.9.12",
+    "angular-messages": "^1.5.0",
     "angular-route": "^1.5.0",
     "body-parser": "^1.15.0",
+    "bootstrap": "^3.3.6",
+    "compression": "^1.6.1",
     "express": "^4.13.4",
+    "express-session": "^1.13.0",
     "font-awesome": "^4.5.0",
+    "forever-monitor": "^1.7.0",
+    "helmet": "^1.3.0",
     "intel": "^1.1.0",
     "jquery": "^2.2.1",
     "mongodb": "^2.1.4"
+  },
+  "devDependencies": {
+    "utils-error-to-json": "^1.0.0"
   }
 }
