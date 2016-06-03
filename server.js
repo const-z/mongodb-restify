@@ -4,29 +4,24 @@ var express = require("express");
 var log = require("intel").getLogger("server.js");
 var bodyParser = require("body-parser");
 var helmet = require("helmet");
-var session = require("express-session");
 var compression = require("compression");
+var server = express();
+var errorToJSON = require("utils-error-to-json");
 //
 var DataStorageFacade = require("./modules/data-storage-facade");
 var Config = require("./modules/config");
-var server = express();
-var errorToJSON = require("utils-error-to-json");
 
 ////////////////////////////////////////////////
 
 var config = new Config("/config.json");
 var dataStorageFacade = new DataStorageFacade(config);
 
+log.info("start in [", server.get("env"), "] mode");
+
 server.set("trust proxy", 1); // trust first proxy
 server.use(bodyParser.json()); // for parsing application/json
 server.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 server.use(helmet());
-server.use(session({
-	secret: "s3Cur3",
-	resave: false,
-	saveUninitialized: true,
-	cookie: { secure: true }
-}));
 server.use(compression());
 
 var router = express.Router();
