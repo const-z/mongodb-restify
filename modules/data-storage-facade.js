@@ -15,7 +15,7 @@ class DataStorageFacade extends DataStorage {
             callback(err, result);
         });
     }
-    
+
     update(databaseName, collectionName, id, data) {
         data = Array.isArray(data) ? data[0] : data;
         data._id = isNaN(id) ? new BSON.ObjectID(id) : +id;
@@ -175,9 +175,13 @@ class DataStorageFacade extends DataStorage {
         };
 
         proc(collectionName, document, (cn, doc) => {
-            this.save(databaseName, collectionName, doc, (err, result) => {
-                callback(err, result);
-            });
+            this.save(databaseName, collectionName, doc)
+				.then(result => {
+					callback(null, result);
+				})
+				.catch(err => {
+					callback(err);
+				});
         });
     }
 }

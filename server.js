@@ -78,20 +78,6 @@ server.post("/_data/:db/:collection", (req, res) => {
 	});
 });
 
-// server.put("/_data/:db/:collection/:id", (req, res) => {
-// 	dataStorageFacade.update(req.params.db, req.params.collection, req.params.id, req.body, (err, result) => {
-// 		res.set("content-type", "application/json; charset=utf-8");
-// 		if (err) {
-// 			res.status(500).json(errorToJSON(err));
-// 			throw err;
-// 		}
-// 		if (!result) {
-// 			res.status(404).end();
-// 			return;
-// 		}
-// 		res.status(200).json(result);
-// 	});
-// });
 server.put("/_data/:db/:collection/:id", (req, res) => {
 	dataStorageFacade.update(req.params.db, req.params.collection, req.params.id, req.body)
 		.then(result => {
@@ -103,10 +89,9 @@ server.put("/_data/:db/:collection/:id", (req, res) => {
 			res.status(200).json(result);
 		})
 		.catch(err => {
-			if (err) {
-				res.status(500).json(errorToJSON(err));
-				throw err;
-			}
+			res.status(500).json(errorToJSON(err));
+			log.error(err);
+			throw err;
 		});
 });
 
