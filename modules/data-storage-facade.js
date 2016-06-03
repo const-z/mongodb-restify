@@ -18,17 +18,38 @@ class DataStorageFacade extends DataStorage {
 
     update(databaseName, collectionName, id, data, callback) {
         data = Array.isArray(data) ? data[0] : data;
-        data._id = isNaN(id) ? new BSON.ObjectID(id) : +id
-        this.deepSave(databaseName, collectionName, data, (err, result) => {
-            callback(err, result);
-        });
+        data._id = isNaN(id) ? new BSON.ObjectID(id) : +id;
+
+		this.count(databaseName, collectionName, { "_id": data._id }, (err, result) => {
+			if (err) {
+				callback(err);
+				return;
+			}
+			if (result === 0) {
+				callback(err, null);
+				return;
+			}
+			this.deepSave(databaseName, collectionName, data, (err, result) => {
+				callback(err, result);
+			});
+		});
     }
 
     remove(databaseName, collectionName, id, callback) {
         id = isNaN(id) ? new BSON.ObjectID(id) : +id;
-        super.remove(databaseName, collectionName, id, (err, result) => {
-            callback(err, result);
-        });
+		this.count(databaseName, collectionName, { "_id": id }, (err, result) => {
+			if (err) {
+				callback(err);
+				return;
+			}
+			if (result === 0) {
+				callback(err, null);
+				return;
+			}
+			super.remove(databaseName, collectionName, id, (err, result) => {
+				callback(err, result);
+			});
+		});
     }
 
     read(databaseName, collectionName, id, query, options, callback) {
@@ -39,7 +60,7 @@ class DataStorageFacade extends DataStorage {
                 throw Error("Неверный идентификатор");
             }
             q = {
-                '_id': isNaN(id) ? new BSON.ObjectID(id) : +id
+                "_id": isNaN(id) ? new BSON.ObjectID(id) : +id
             };
         } else {
             q = query.query ? JSON.parse(query.query) : {};
@@ -47,7 +68,7 @@ class DataStorageFacade extends DataStorage {
 
         options = options || {};
 
-        var optionsKey = ['limit', 'sort', 'fields', 'skip', 'hint', 'explain', 'snapshot', 'timeout'];
+        var optionsKey = ["limit", "sort", "fields", "skip", "hint", "explain", "snapshot", "timeout"];
 
         for (var v in query) {
             if (optionsKey.indexOf(v) !== -1) {
@@ -77,7 +98,7 @@ class DataStorageFacade extends DataStorage {
                 }
             }
             return result;
-        }
+        };
 
         let proc = (db, collection, query, options, callback) => {
             super.find(db, collection, query, options, (err, docs) => {
@@ -108,7 +129,7 @@ class DataStorageFacade extends DataStorage {
                     callback(err, docs);
                 }
             });
-        }
+        };
 
         proc(databaseName, collectionName, query, options, (err, result) => {
             callback(err, result);
@@ -126,7 +147,7 @@ class DataStorageFacade extends DataStorage {
                 }
             }
             return result;
-        }
+        };
 
         let proc = (collectionName, document, callback) => {
             var err = null;

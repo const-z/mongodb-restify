@@ -38,5 +38,8 @@
     "intel": "^1.1.0",
     "jquery": "^2.2.1",
     "mongodb": "^2.1.4"
+  },
+  "devDependencies": {
+    "utils-error-to-json": "^1.0.0"
   }
 }
