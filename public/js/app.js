@@ -44,20 +44,20 @@ app.factory("appService", ["$http", function($http) {
 }]);
 
 app.config(function($routeProvider, $locationProvider, $provide, $httpProvider) {
-    $routeProvider.when('/data/:database', {
-        controller: 'appController'
+    $routeProvider.when("/data/:database", {
+        controller: "appController"
     });
 
-    $routeProvider.when('/data/:database/:collection', {
-        controller: 'appController'
+    $routeProvider.when("/data/:database/:collection", {
+        controller: "appController"
     });
 
-    $routeProvider.when('/data/:database/:collection/page/:pageNum', {
-        controller: 'appController'
+    $routeProvider.when("/data/:database/:collection/page/:pageNum", {
+        controller: "appController"
     });
 
-    $routeProvider.when('/data/:database/:collection/:command', {
-        controller: 'appController'
+    $routeProvider.when("/data/:database/:collection/:command", {
+        controller: "appController"
     });
 
     $locationProvider.html5Mode({
@@ -66,7 +66,7 @@ app.config(function($routeProvider, $locationProvider, $provide, $httpProvider) 
     });
     $locationProvider.html5Mode(true);
 
-    $provide.factory('LoggingHttpInterceptor', function($q, $rootScope) {
+    $provide.factory("LoggingHttpInterceptor", function($q, $rootScope) {
         $rootScope.requestsLog = [];
         return {
             request: function(config) {
@@ -74,7 +74,7 @@ app.config(function($routeProvider, $locationProvider, $provide, $httpProvider) 
                 r.headers = config.headers;
                 r.url = config.url;
                 r.method = config.method;
-                
+
                 $rootScope.requestsLog.push(r);
                 console.log(config);
                 return config || $q.when(config);
@@ -96,5 +96,5 @@ app.config(function($routeProvider, $locationProvider, $provide, $httpProvider) 
 app.run(["$rootScope", "$location", "$window", "$route", "$filter", function($rootScope, $location, $window, $route, $filter) {
     $rootScope.goto = function(path) {
         $location.path(path);
-    }
+    };
 }]);

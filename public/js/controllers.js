@@ -10,7 +10,7 @@ appModule.controller("AppController", function($scope, $location, $route, $timeo
 
     $scope.pageSize = 20;
 
-    $scope.query = { order: '_id', limit: 10, page: 1 };
+    $scope.query = { order: "_id", limit: 10, page: 1 };
 
     appService.getDatabases(function(data) {
         $scope.databases = data.databases;
@@ -19,7 +19,7 @@ appModule.controller("AppController", function($scope, $location, $route, $timeo
     $scope.$on("$locationChangeSuccess", function(event, next, current) {
         var url = $location.search().url;
         if (url) {
-            $location.search('url', null);
+            $location.search("url", null);
             $location.path(url);
         }
         if (!!$route.current && $route.current.params.database) {
@@ -68,6 +68,7 @@ appModule.controller("AppController", function($scope, $location, $route, $timeo
             return;
         }
         appService.getCollectionStats(database, collection, function(stats) {
+
             $scope.collectionSelected.stats = stats;
             $scope.collectionSelected.pages = Math.ceil(stats.count / $scope.pageSize);
             $scope.collectionSelected.name = collection;
@@ -92,62 +93,6 @@ appModule.controller("AppController", function($scope, $location, $route, $timeo
     $scope.refreshContent = function() {
         selectCollection($scope.databaseSelected.name, $scope.collectionSelected.name);
     };
-
-    ////////////////////////////////////////////////////
-    // $scope.toggleLeft = buildDelayedToggler('left');
-    // $scope.toggleRight = buildToggler('right');
-    // $scope.isOpenRight = function () {
-    //     return $mdSidenav('right').isOpen();
-    // };
-
-    // /**
-    //  * Supplies a function that will continue to operate until the
-    //  * time is up.
-    //  */
-    // function debounce(func, wait, context) {
-    //     var timer;
-
-    //     return function debounced() {
-    //         var context = $scope,
-    //             args = Array.prototype.slice.call(arguments);
-    //         $timeout.cancel(timer);
-    //         timer = $timeout(function () {
-    //             timer = undefined;
-    //             func.apply(context, args);
-    //         }, wait || 10);
-    //     };
-    // }
-
-    // /**
-    //  * Build handler to open/close a SideNav; when animation finishes
-    //  * report completion in console
-    //  */
-    // function buildDelayedToggler(navID) {
-    //     return debounce(function () {
-    //         $mdSidenav(navID)
-    //             .toggle()
-    //             .then(function () {
-    //                 //$log.debug("toggle " + navID + " is done");
-    //             });
-    //     }, 200);
-    // }
-
-    // function buildToggler(navID) {
-    //     return function () {
-    //         $mdSidenav(navID)
-    //             .toggle()
-    //             .then(function () {
-    //                 // $log.debug("toggle " + navID + " is done");
-    //             });
-    //     }
-    // }
-
-    // $scope.close = function () {
-    //     $mdSidenav('left').close()
-    //         .then(function () {
-    //             // $log.debug("close LEFT is done");
-    //         });
-    // };
 });
 
 function loadCollectionStats(appService, database, collectionIndex, callback) {

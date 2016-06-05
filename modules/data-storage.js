@@ -57,24 +57,6 @@ class DataStorage {
 		});
 	}
 
-	// save(databaseName, collectionName, document, callback) {
-	// 	this._connect(databaseName).then(db => {
-	// 		var collection = db.collection(collectionName);
-	// 		collection.insert(document, (err, docs) => {
-	// 			if (err && err.code == 11000) {
-	// 				collection.updateOne({ "_id": document._id }, { $set: document }, function (err, docs) {
-	// 					callback(err, document._id);
-	// 				});
-	// 			} else {
-	// 				callback(err, docs.insertedIds[0]);
-	// 			}
-	// 		});
-	// 	})
-	// 		.catch(err => {
-	// 			callback(err);
-	// 		});
-	// }
-
 	save(databaseName, collectionName, document) {
 		return new Promise((resolve, reject) => {
 			this._connect(databaseName)
@@ -105,13 +87,10 @@ class DataStorage {
 				.then(db => {
 					var spec = { "_id": id };
 					var collection = db.collection(collectionName);
-					collection.deleteOne(spec)
-						.then(result => {
-							resolve(result);
-						})
-						.catch(err => {
-							reject(err);
-						});
+					return collection.deleteOne(spec);
+				})
+				.then(result => {
+					resolve(result);
 				})
 				.catch(err => {
 					reject(err);
@@ -119,91 +98,120 @@ class DataStorage {
 		});
 	}
 
-	// count(databaseName, collectionName, query) {
-	// 	return new Promise((resolve, reject) => {
-	// 		this._connect(databaseName).then(db => {
-	// 			var collection = db.collection(collectionName);
-	// 			collection.count(query).then(result => {
-	// 				resolve(result);
-	// 			}).catch(err => {
-	// 				reject(err);
-	// 			});
-	// 		}).catch(err => {
-	// 			reject(err);
-	// 		});
-	// 	});
-	// }
 	count(databaseName, collectionName, query) {
 		return new Promise((resolve, reject) => {
-			this._connect(databaseName).then(db => {
-				var collection = db.collection(collectionName);
-				collection.count(query).then(result => {
+			this._connect(databaseName)
+				.then(db => {
+					var collection = db.collection(collectionName);
+					return collection.count(query);
+				})
+				.then(result => {
 					resolve(result);
 				}).catch(err => {
 					reject(err);
 				});
-			}).catch(err => {
-				reject(err);
-			});
 		});
 	}
 
 	// options.db - name of database - not required. if present then return database metadata
 	// options.collection - name of collection - not required. if present then options.db become required, return metadata
-	metadata(options, callback) {
-		if (!options.database && !options.collection) {
-			this._connect(null)
-				.then(result => {
-					result.admin().listDatabases((err, result) => {
-						let count = result.databases.length;
-						for (let i in result.databases) {
-							let database = result.databases[i];
-							this._connect(database.name, (err, db) => {
-								if (err) {
-									callback(err);
-									return;
-								}
-								db.stats((err, stats) => {
-									database.stats = stats;
-									db.listCollections().toArray((err, collections) => {
-										database.collections = collections;
-										if (!--count) {
-											callback(err, result);
-										}
-									});
-								});
-							});
+	metadata(options) {
+
+		var getCollectionInfo = (database, collection) => {
+			return new Promise((resolve, reject) => {
+				this._connect(database)
+					.then(dbConnection => {
+						return dbConnection.collection(collection).stats();
+					})
+					.then(stats => {
+						resolve({ "name": collection, "stats": stats });
+					})
+					.catch(err => {
+						reject(err);
+					});
+			});
+		};
+
+		var getDBInfo = (database) => {
+			return new Promise((resolve, reject) => {
+				let info = { name: database };
+				this._connect(database)
+					.then(dbConnection => {
+						return dbConnection.listCollections().toArray();
+					})
+					.then(collections => {
+						info.collections = collections;
+						let colInfos = [];
+						for (let c of info.collections) {
+							colInfos.push(getCollectionInfo(database, c.name));
 						}
+						return Promise.all(colInfos);
+					})
+					.then(collectionsInfos => {
+						for (let c of info.collections) {
+							for (let ci of collectionsInfos) {
+								if (c.name === ci.name) {
+									c.stats = ci.stats;
+								}
+							}
+						}
+						return this._connect(info.name);
+					})
+					.then(dbConnection => {
+						return dbConnection.stats();
+					})
+					.then(stats => {
+						info.stats = stats;
+						resolve(info);
+					})
+					.catch(err => {
+						reject(err);
 					});
-				})
-				.catch(err => {
-					reject(err);
-				});
+			});
+		};
+
+		if (!options.database && !options.collection) {
+			return new Promise((resolve, reject) => {
+				this._connect(null)
+					.then(result => {
+						return result.admin().listDatabases();
+					})
+					.then(result => {
+						let promises = [];
+						for (let database of result.databases) {
+							promises.push(getDBInfo(database.name));
+						}
+						Promise.all(promises)
+							.then((results) => {
+								resolve({ "databases": results });
+							})
+							.catch((err) => {
+								reject(err);
+							});
+					})
+					.catch(err => {
+						reject(err);
+					});
+			});
 		} else if (options.database && !options.collection) {
-			this._connect(options.database, (err, db) => {
-				if (err) {
-					callback(err);
-					return;
-				}
-				let database = {};
-				db.stats((err, result) => {
-					database.stats = result;
-					db.listCollections().toArray((err, collections) => {
-						database.collections = collections;
-						callback(err, database);
+			return new Promise((resolve, reject) => {
+				getDBInfo(options.database)
+					.then(info => {
+						resolve(info);
+					})
+					.catch(err => {
+						reject(err);
 					});
-				});
 			});
 		} else {
-			this._connect(options.database, (err, db) => {
-				if (err) {
-					callback(err);
-					return;
-				}
-				var collection = db.collection(options.collection);
-				collection.stats((err, result) => {
-					callback(err, result);
-				});
+			return new Promise((resolve, reject) => {
+				getCollectionInfo(options.database, options.collection)
+					.then(collectionInfo => {
+						resolve(collectionInfo.stats);
+					})
+					.catch(err => {
+						reject(err);
+					});
 			});
 		}
 	}
