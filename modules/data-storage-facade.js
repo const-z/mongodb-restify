@@ -43,6 +43,7 @@ class DataStorageFacade extends DataStorage {
 
     remove(databaseName, collectionName, id) {
         id = isNaN(id) ? new BSON.ObjectID(id) : +id;
+
 		return new Promise((resolve, reject) => {
             this.count(databaseName, collectionName, { "_id": id })
                 .then(result => {
@@ -125,42 +126,79 @@ class DataStorageFacade extends DataStorage {
 				return result;
 			};
 
+			// let proc = (db, collection, query, options) => {
+			// 	return new Promise((resolve, reject) => {
+			// 		super.find(db, collection, query, options)
+			// 			.then(docs => {
+			// 				if (docs && docs.length > 0) {
+			// 					let docsCount = docs.length;
+
+			// 					for (let d of docs) {
+			// 						// промис алл для документов
+			// 						let idsList = getIdsList(d);
+			// 						let idsCount = idsList.length;
+			// 						if (!idsCount) {
+			// 							if (!--docsCount) {
+			// 								resolve(docs);
+			// 							}
+			// 							continue;
+			// 						}
+			// 						let promisesSubDocs = [];
+			// 						for (let id of idsList) {
+			// 							let q = { "_id": d[id] };
+			// 							promisesSubDocs.push(proc(db, id, q, {}));
+			// 						}
+			// 						Promise.all(promisesSubDocs)
+			// 							.then(subDocs => {
+			// 								for (let sd of subDocs) {
+			// 									d[sd.name] = sd;
+			// 								}
+			// 								resolve(docs);
+			// 							})
+			// 							.catch(err => {
+			// 								reject(err);
+			// 							});
+			// 					}
+			// 				} else {
+			// 					resolve(docs);
+			// 				}
+			// 			})
+			// 			.catch(err => {
+			// 				reject(err);
+			// 			});
+			// 	});
+			// };
+
 			let proc = (db, collection, query, options) => {
 				return new Promise((resolve, reject) => {
 					super.find(db, collection, query, options)
 						.then(docs => {
 							if (docs && docs.length > 0) {
 								let docsCount = docs.length;
-
-								for (let d of docs) {
-									//
-
-
-									промис алл для документов
-
-									let idsList = getIdsList(d);
+								for (let d in docs) {
+									let idsList = getIdsList(docs[d]);
 									let idsCount = idsList.length;
-
 									if (!idsCount) {
 										if (!--docsCount) {
 											resolve(docs);
 										}
 										continue;
 									}
-									let promisesSubDocs = [];
-									for (let id of idsList) {
-										let q = { "_id": d[id] };
-										promisesSubDocs.push(proc(db, id, q, {}));
+									for (let id in idsList) {
+										let q = { "_id": docs[d][idsList[id]] };
+										proc(db, idsList[id], q, {})
+											.then(subDocs => {
+												docs[d][idsList[id]] = subDocs ? subDocs[0] : null;
+												if (!--idsCount) {
+													if (!--docsCount) {
+														resolve(docs);
+													}
+												}
+											})
+											.catch(err => {
+												reject(err);
+											});
 									}
-									Promise.all(promisesSubDocs)
-										.then(subDocs => {
-											for (let sd of subDocs) {
-												d[sd.name] = sd;
-											}
-										})
-										.catch(err => {
-											reject(err);
-										});
 								}
 							} else {
 								resolve(docs);
