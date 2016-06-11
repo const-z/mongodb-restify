@@ -101,7 +101,7 @@ server.delete("/_data/:db/:collection/:id", (req, res) => {
 				res.status(404).end();
 				return;
 			}
-			res.status(200).json(result);
+			res.status(200).end();
 		})
 		.catch(err => {
 			res.status(500).json(errorToJSON(err));
