@@ -32,35 +32,33 @@ router.use(function (req, res, next) {
 server.use("/", router);
 
 let read = (req, res) => {
-	dataStorageFacade.read(
-		req.params.db,
-		req.params.collection,
-		req.params.id,
-		req.query,
-		req.params.options, (err, docs) => {
+	dataStorageFacade.read(req.params.db, req.params.collection, req.params.id, req.query, req.params.options)
+		.then(docs => {
 			res.set("content-type", "application/json; charset=utf-8");
-			if (err) {
-				res.status(500).json(errorToJSON(err));
-				throw err;
-			}
 			if (!docs || docs.length == 0) {
 				res.status(404).json(docs);
 			} else {
 				res.status(200).json(docs);
 			}
+		}).catch(err => {
+			res.status(500).json(errorToJSON(err));
+			log.error(err);
+			throw err;
 		});
 };
 
 server.get("/_data/:db/:collection/count?", (req, res) => {
 	var query = req.query.query ? JSON.parse(req.query.query) : {};
-	dataStorageFacade.count(req.params.db, req.params.collection, query, (err, result) => {
-		res.set("content-type", "application/json; charset=utf-8");
-		if (err) {
+	dataStorageFacade.count(req.params.db, req.params.collection, query)
+		.then(result => {
+			res.set("content-type", "application/json; charset=utf-8");
+			res.status(200).json(result);
+		})
+		.catch(err => {
 			res.status(500).json(errorToJSON(err));
+			log.error(err);
 			throw err;
-		}
-		res.status(200).json(result);
-	});
+		});
 });
 
 server.get("/_data/:db/:collection/:id?", read);
@@ -78,20 +76,6 @@ server.post("/_data/:db/:collection", (req, res) => {
 	});
 });
 
-// server.put("/_data/:db/:collection/:id", (req, res) => {
-// 	dataStorageFacade.update(req.params.db, req.params.collection, req.params.id, req.body, (err, result) => {
-// 		res.set("content-type", "application/json; charset=utf-8");
-// 		if (err) {
-// 			res.status(500).json(errorToJSON(err));
-// 			throw err;
-// 		}
-// 		if (!result) {
-// 			res.status(404).end();
-// 			return;
-// 		}
-// 		res.status(200).json(result);
-// 	});
-// });
 server.put("/_data/:db/:collection/:id", (req, res) => {
 	dataStorageFacade.update(req.params.db, req.params.collection, req.params.id, req.body)
 		.then(result => {
@@ -103,60 +87,67 @@ server.put("/_data/:db/:collection/:id", (req, res) => {
 			res.status(200).json(result);
 		})
 		.catch(err => {
-			if (err) {
-				res.status(500).json(errorToJSON(err));
-				throw err;
-			}
+			res.status(500).json(errorToJSON(err));
+			log.error(err);
+			throw err;
 		});
 });
 
 server.delete("/_data/:db/:collection/:id", (req, res) => {
-	dataStorageFacade.remove(req.params.db, req.params.collection, req.params.id, (err, result) => {
-		res.set("content-type", "application/json; charset=utf-8");
-		if (err) {
+	dataStorageFacade.remove(req.params.db, req.params.collection, req.params.id)
+		.then(result => {
+			res.set("content-type", "application/json; charset=utf-8");
+			if (!result) {
+				res.status(404).end();
+				return;
+			}
+			res.status(200).json(result);
+		})
+		.catch(err => {
 			res.status(500).json(errorToJSON(err));
+			log.error(err);
 			throw err;
-		}
-		if (!result) {
-			res.status(404).end();
-			return;
-		}
-		res.status(200).end();
-	});
+		});
 });
 
 // meta
 server.get("/_meta/:db/:collection", (req, res) => {
-	dataStorageFacade.metadata({ database: req.params.db, collection: req.params.collection }, (err, result) => {
-		res.set("content-type", "application/json; charset=utf-8");
-		if (err) {
+	dataStorageFacade.metadata({ database: req.params.db, collection: req.params.collection })
+		.then(result => {
+			res.set("content-type", "application/json; charset=utf-8");
+			res.status(200).json(result);
+		})
+		.catch(err => {
 			res.status(500).json(errorToJSON(err));
+			log.error(err);
 			throw err;
-		}
-		res.status(200).json(result);
-	});
+		});
 });
 
 server.get("/_meta/:db", (req, res) => {
-	dataStorageFacade.metadata({ database: req.params.db }, (err, result) => {
-		res.set("content-type", "application/json; charset=utf-8");
-		if (err) {
+	dataStorageFacade.metadata({ database: req.params.db })
+		.then(result => {
+			res.set("content-type", "application/json; charset=utf-8");
+			res.status(200).json(result);
+		})
+		.catch(err => {
 			res.status(500).json(errorToJSON(err));
+			log.error(err);
 			throw err;
-		}
-		res.status(200).json(result);
-	});
+		});
 });
 
 server.get("/_meta", (req, res) => {
-	dataStorageFacade.metadata({ database: req.params.db }, (err, result) => {
-		res.set("content-type", "application/json; charset=utf-8");
-		if (err) {
+	dataStorageFacade.metadata({})
+		.then(result => {
+			res.set("content-type", "application/json; charset=utf-8");
+			res.status(200).json(result);
+		})
+		.catch(err => {
 			res.status(500).json(errorToJSON(err));
+			log.error(err);
 			throw err;
-		}
-		res.status(200).json(result);
-	});
+		});
 });
 
 // static content
